@@ -17,7 +17,6 @@ TODO:
 
 [![Build Status](https://circleci.com/gh/rafaeljesus/nsq-event-bus.svg?style=svg)](https://circleci.com/gh/rafaeljesus/nsq-event-bus)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rafaeljesus/nsq-event-bus)](https://goreportcard.com/report/github.com/rafaeljesus/nsq-event-bus)
-[![](https://images.microbadger.com/badges/image/rafaeljesus/nsq-event-bus.svg)](https://microbadger.com/images/rafaeljesus/nsq-event-bus "Get your own image badge on microbadger.com")
 
 ---
 
