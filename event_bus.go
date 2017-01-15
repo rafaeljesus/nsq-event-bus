@@ -1,4 +1,4 @@
-package event_bus
+package eventbus
 
 import (
 	"encoding/json"
@@ -6,8 +6,8 @@ import (
 	"os"
 )
 
-var NSQ_URL = os.Getenv("KYP_NSQ_URL")
-var NSQ_LOOKUPD_URL = os.Getenv("KYP_NSQ_LOOKUPD_URL")
+var NSQ_URL = os.Getenv("NSQ_URL")
+var NSQ_LOOKUPD_URL = os.Getenv("NSQ_LOOKUPD_URL")
 
 type fnHandler func(message []byte) error
 

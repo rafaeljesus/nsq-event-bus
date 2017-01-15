@@ -2,9 +2,52 @@
 
 * A tiny wrapper around [go-nsq](https://github.com/nsqio/go-nsq) topic and channel.
 
-## Usage
+## Installation
+```go
+go get -u https://github.com/rafaeljesus/nsq-event-bus
+```
 
-TODO:
+## Environment Variables
+```bash
+export NSQ_URL=localhost:4151
+export NSQ_LOOKUPD_URL=localhost:4151
+```
+
+## Usage
+The nsq-event-bus package exposes a interface for emitting and listening events.
+
+### Emitter
+```go
+import "github.com/rafaeljesus/nsq-event-bus"
+
+topic := "events"
+var event struct{}
+eventBus, _ := eventbus.NewEventBus()
+
+if err := eventBus.Emit(topic, &event); err != nil {
+  // handle failure to emit message
+}
+
+```
+
+### Listener
+```go
+import "github.com/rafaeljesus/nsq-event-bus"
+
+topic := "events"
+metricsChannel := "metrics"
+notificationsChannel := "notifications"
+eventBus, _ := eventbus.NewEventBus()
+
+if err := eventBus.On(topic, metricsChannel); err != nil {
+  // handle failure to listen a message
+}
+
+if err := eventBus.On(topic, notificationsChannel); err != nil {
+  // handle failure to listen a message
+}
+
+```
 
 ## Contributing
 - Fork it
