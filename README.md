@@ -39,12 +39,30 @@ metricsChannel := "metrics"
 notificationsChannel := "notifications"
 eventBus, _ := eventbus.NewEventBus()
 
-if err := eventBus.On(topic, metricsChannel); err != nil {
+if err := eventBus.On(topic, metricsChannel, metricsHandler); err != nil {
   // handle failure to listen a message
 }
 
-if err := eventBus.On(topic, notificationsChannel); err != nil {
+if err := eventBus.On(topic, notificationsChannel, notificationsHandler); err != nil {
   // handle failure to listen a message
+}
+
+func metricsHandler(message []byte) error {
+	event := &Event{}
+	if err := json.Unmarshal(message, &event); err != nil {
+		return err
+	}
+  // do something
+  return nil
+}
+
+func notificationsHandler(message []byte) error {
+	event := &Event{}
+	if err := json.Unmarshal(message, &event); err != nil {
+		return err
+	}
+  // do something
+  return nil
 }
 
 ```
