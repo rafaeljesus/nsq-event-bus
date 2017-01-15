@@ -1,0 +1,4 @@
+package: github.com/rafaeljesus/nsq-event-bus
+import:
+- package: github.com/nsqio/go-nsq
+  version: v1.0.6

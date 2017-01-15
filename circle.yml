@@ -1,0 +1,30 @@
+machine:
+  environment:
+    IMPORT_PATH: "/home/ubuntu/.go_workspace/src/github.com/rafaeljesus"
+    APP_PATH: "$IMPORT_PATH/ccha"
+  services:
+    - docker
+
+dependencies:
+  pre:
+    - sudo add-apt-repository ppa:masterminds/glide -y
+    - sudo apt-get update
+    - sudo apt-get install glide -y
+    - mkdir -p "$IMPORT_PATH"
+  override:
+    - ln -sf "$(pwd)" "$APP_PATH"
+    - cd "$APP_PATH" && glide install
+
+test:
+  override:
+    - cd "$APP_PATH" && GIN_MODE=test go vet && go test -v -race -cover $(glide nv)
+
+deployment:
+  master:
+    branch: master
+    commands:
+      - cd "$APP_PATH" && sh build
+      - docker build -t rafaeljesus/ccha .
+      - docker login -e $DOCKERHUB_EMAIL -u $DOCKERHUB_USER -p $DOCKERHUB_PASS
+      - docker tag rafaeljesus/ccha rafaeljesus/ccha:master
+      - docker push rafaeljesus/ccha:master
