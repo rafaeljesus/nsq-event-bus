@@ -3,7 +3,7 @@
 * A tiny wrapper around [go-nsq](https://github.com/nsqio/go-nsq) topic and channel.
 
 ## Installation
-```go
+```bash
 go get -u https://github.com/rafaeljesus/nsq-event-bus
 ```
 
