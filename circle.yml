@@ -17,4 +17,4 @@ dependencies:
 
 test:
   override:
-    - cd "$APP_PATH" && GIN_MODE=test go vet && go test -v -race -cover $(glide nv)
+    - cd "$APP_PATH" && go vet && go test -v -race -cover $(glide nv)
