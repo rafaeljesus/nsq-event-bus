@@ -2,7 +2,9 @@ package eventbus
 
 import (
 	"encoding/json"
+	"log"
 	"testing"
+	"time"
 )
 
 type message struct {
@@ -27,6 +29,7 @@ func TestEventBusOn(t *testing.T) {
 	}
 
 	testHandler := func(msg []byte) error {
+		log.Print("on handler")
 		m := message{}
 		if err := json.Unmarshal(msg, &m); err != nil {
 			t.Errorf("Expected to unmarshal a message %s", err)
@@ -39,7 +42,11 @@ func TestEventBusOn(t *testing.T) {
 		t.Errorf("Expected to listen a message %s", err)
 	}
 
+	time.Sleep(200 * time.Millisecond)
+
 	if err := bus.Emit("topic", &message{Name: "event"}); err != nil {
 		t.Errorf("Expected to emit message %s", err)
 	}
+
+	time.Sleep(200 * time.Millisecond)
 }
