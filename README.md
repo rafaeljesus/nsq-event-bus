@@ -9,7 +9,7 @@ go get -u https://github.com/rafaeljesus/nsq-event-bus
 
 ## Environment Variables
 ```bash
-export NSQ_URL=localhost:4151
+export NSQ_URL=localhost:4150
 export NSQ_LOOKUPD_URL=localhost:4151
 ```
 

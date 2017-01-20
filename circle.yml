@@ -7,14 +7,23 @@ machine:
 
 dependencies:
   pre:
+    - wget https://s3.amazonaws.com/bitly-downloads/nsq/nsq-0.3.8.linux-amd64.go1.6.2.tar.gz
+    - tar xvzf nsq-0.3.8.linux-amd64.go1.6.2.tar.gz
+    - cp nsq-0.3.8.linux-amd64.go1.6.2/bin/* .
+    - ./nsqlookupd:
+        background: true
+    - ./nsqd --lookupd-tcp-address=127.0.0.1:4160:
+        background: true
     - sudo add-apt-repository ppa:masterminds/glide -y
     - sudo apt-get update
     - sudo apt-get install glide -y
     - mkdir -p "$IMPORT_PATH"
+  cache_directories:
+    - nsq-0.3.8.linux-amd64.go1.6.2
   override:
     - ln -sf "$(pwd)" "$APP_PATH"
     - cd "$APP_PATH" && glide install
 
 test:
   override:
-    - cd "$APP_PATH" && GIN_MODE=test go vet && go test -v -race -cover $(glide nv)
+    - cd "$APP_PATH" && go vet && go test -v -race -cover $(glide nv)

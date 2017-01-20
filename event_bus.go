@@ -21,6 +21,16 @@ type Bus struct {
 	Config   *nsq.Config
 }
 
+func init() {
+	if NSQ_URL == "" {
+		NSQ_URL = "localhost:4150"
+	}
+
+	if NSQ_LOOKUPD_URL == "" {
+		NSQ_LOOKUPD_URL = "localhost:4161"
+	}
+}
+
 func NewEventBus() (EventBus, error) {
 	config := nsq.NewConfig()
 	producer, err := nsq.NewProducer(NSQ_URL, config)
