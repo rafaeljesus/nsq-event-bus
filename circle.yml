@@ -1,20 +1,32 @@
 machine:
-  environment:
-    IMPORT_PATH: "/home/ubuntu/.go_workspace/src/github.com/rafaeljesus"
-    APP_PATH: "$IMPORT_PATH/nsq-event-bus"
+  pre:
+    - curl -sSL https://s3.amazonaws.com/circle-downloads/install-circleci-docker.sh | bash -s -- 1.10.0
   services:
     - docker
 
 dependencies:
-  pre:
-    - sudo add-apt-repository ppa:masterminds/glide -y
-    - sudo apt-get update
-    - sudo apt-get install glide -y
-    - mkdir -p "$IMPORT_PATH"
   override:
-    - ln -sf "$(pwd)" "$APP_PATH"
-    - cd "$APP_PATH" && glide install
+    - docker pull segment/golang:latest
 
 test:
   override:
-    - cd "$APP_PATH" && go vet && go test -v -race -cover $(glide nv)
+    - >
+      docker run
+      $(env | grep -E '^CIRCLE_|^DOCKER_|^CIRCLECI=|^CI=' | sed 's/^/--env /g' | tr "\\n" " ")
+      --rm
+      --tty
+      --interactive
+      --name go
+      --net host
+      --volume /var/run/docker.sock:/run/docker.sock
+      --volume ${GOPATH%%:*}/src:/go/src
+      --volume ${PWD}:/go/src/github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}
+      --workdir /go/src/github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}
+      segment/golang:latest
+      go.test='govendor test -v -cover +local'
+
+deployment:
+  release:
+    tag: /.*/
+    commands:
+      - 'true'
