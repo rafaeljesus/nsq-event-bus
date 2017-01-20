@@ -2,7 +2,6 @@ package eventbus
 
 import (
 	"encoding/json"
-	"log"
 	"testing"
 	"time"
 )
@@ -29,7 +28,6 @@ func TestEventBusOn(t *testing.T) {
 	}
 
 	testHandler := func(msg []byte) error {
-		log.Print("on handler")
 		m := message{}
 		if err := json.Unmarshal(msg, &m); err != nil {
 			t.Errorf("Expected to unmarshal a message %s", err)
