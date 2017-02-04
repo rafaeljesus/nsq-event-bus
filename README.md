@@ -24,7 +24,8 @@ topic := "events"
 var event struct{}
 eventBus, _ := eventbus.NewEventBus()
 
-if err := eventBus.Emit(topic, &event); err != nil {
+message := eventbus.Message{Payload: &event}
+if err := eventBus.Emit(topic, &message); err != nil {
   // handle failure to emit message
 }
 
@@ -47,22 +48,22 @@ if err := eventBus.On(topic, notificationsChannel, notificationsHandler); err !=
   // handle failure to listen a message
 }
 
-func metricsHandler(message []byte) error {
+func metricsHandler(message interface{}) (interface{}, error) {
 	event := &Event{}
-	if err := json.Unmarshal(message, &event); err != nil {
+	if err := json.Unmarshal(message.([]byte), &event); err != nil {
 		return err
 	}
   // do something
   return nil
 }
 
-func notificationsHandler(message []byte) error {
+func notificationsHandler(message interface{}) (interface{}, error) {
 	event := &Event{}
-	if err := json.Unmarshal(message, &event); err != nil {
+	if err := json.Unmarshal(message.([]byte), &event); err != nil {
 		return err
 	}
   // do something
-  return nil
+  return nil, nil
 }
 
 ```
@@ -73,7 +74,7 @@ import "github.com/rafaeljesus/nsq-event-bus"
 
 eventBus, _ := eventbus.NewEventBus()
 
-if err := eventBus.Request("fetch", "channel", replyHandler); err != nil {
+if err := eventBus.Request("fetch", &eventbus.Message{}, replyHandler); err != nil {
   // handle failure to listen a message
 }
 
@@ -83,7 +84,7 @@ func replyHandler(message interface{}) (interface{}, error) {
 		return err
 	}
   // do something
-  return nil, nil
+  return &eventbus.Message{}, nil
 }
 ```
 
