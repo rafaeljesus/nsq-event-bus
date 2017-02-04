@@ -10,7 +10,7 @@ go get -u https://github.com/rafaeljesus/nsq-event-bus
 ## Environment Variables
 ```bash
 export NSQ_URL=localhost:4150
-export NSQ_LOOKUPD_URL=localhost:4151
+export NSQ_LOOKUPD_URL=localhost:4161
 ```
 
 ## Usage
@@ -24,8 +24,8 @@ topic := "events"
 var event struct{}
 eventBus, _ := eventbus.NewEventBus()
 
-message := eventbus.Message{Payload: &event}
-if err := eventBus.Emit(topic, &message); err != nil {
+e := event{}
+if err := eventBus.Emit(topic, &e); err != nil {
   // handle failure to emit message
 }
 
@@ -48,43 +48,45 @@ if err := eventBus.On(topic, notificationsChannel, notificationsHandler); err !=
   // handle failure to listen a message
 }
 
-func metricsHandler(message interface{}) (interface{}, error) {
-	event := &Event{}
-	if err := json.Unmarshal(message.([]byte), &event); err != nil {
-		return err
-	}
-  // do something
-  return nil
+func metricsHandler(payload interface{}) (interface{}, error) {
+  v, ok := payload.(map[string]interface{})
+  if !ok {
+    return nil, ErrPayloadInvalid
+  }
+  // handle message
+  return nil, nil
 }
 
-func notificationsHandler(message interface{}) (interface{}, error) {
-	event := &Event{}
-	if err := json.Unmarshal(message.([]byte), &event); err != nil {
-		return err
-	}
-  // do something
+func notificationsHandler(payload interface{}) (interface{}, error) {
+  v, ok := payload.(map[string]interface{})
+  if !ok {
+    return nil, ErrPayloadInvalid
+  }
+  // handle message
   return nil, nil
 }
 
 ```
 
-### Request (Reply Queue)
+### Request (Request/Reply)
 ```go
 import "github.com/rafaeljesus/nsq-event-bus"
 
+topic := "user_signup"
 eventBus, _ := eventbus.NewEventBus()
 
-if err := eventBus.Request("fetch", &eventbus.Message{}, replyHandler); err != nil {
+e := event{Login: "rafa", Password: "ilhabela_is_the_place"}
+if err := eventBus.Request(topic, &e, replyHandler); err != nil {
   // handle failure to listen a message
 }
 
 func replyHandler(message interface{}) (interface{}, error) {
-	event := &Event{}
-	if err := json.Unmarshal(message.([]byte), &event); err != nil {
-		return err
-	}
-  // do something
-  return &eventbus.Message{}, nil
+  v, ok := payload.(map[string]interface{})
+  if !ok {
+    return nil, ErrPayloadInvalid
+  }
+  // handle message
+  return nil, nil
 }
 ```
 

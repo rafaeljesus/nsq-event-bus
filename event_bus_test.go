@@ -1,12 +1,11 @@
 package eventbus
 
 import (
-	"encoding/json"
 	"testing"
 	"time"
 )
 
-type payload struct {
+type event struct {
 	Name string
 }
 
@@ -16,8 +15,8 @@ func TestEventBusEmit(t *testing.T) {
 		t.Errorf("Expected to initialize EventBus %s", err)
 	}
 
-	p := payload{Name: "event"}
-	if err := bus.Emit("topic", &Message{Payload: p}); err != nil {
+	e := event{Name: "event"}
+	if err := bus.Emit("topic", &e); err != nil {
 		t.Errorf("Expected to emit message %s", err)
 	}
 }
@@ -28,21 +27,38 @@ func TestEventBusRequest(t *testing.T) {
 		t.Errorf("Expected to initialize EventBus %s", err)
 	}
 
-	testReplyHandler := func(msg interface{}) (interface{}, error) {
-		p := payload{}
-		if err := json.Unmarshal(msg.([]byte), &p); err != nil {
-			t.Errorf("Expected to unmarshal a message %s", err)
+	replyHandler := func(payload interface{}) (interface{}, error) {
+		m, ok := payload.(map[string]interface{})
+		if !ok {
+			t.Errorf("Expected to cast payload in handler")
 		}
-		reply := payload{Name: "Reply"}
 
-		return &Message{Payload: reply}, nil
+		if m["Name"] != "event_reply" {
+			t.Errorf("Expected name to be equal event %s", m["Name"])
+		}
+
+		return nil, nil
 	}
 
-	if err := bus.Request("topic", &Message{}, testReplyHandler); err != nil {
+	handler := func(payload interface{}) (interface{}, error) {
+		_, ok := payload.(map[string]interface{})
+		if !ok {
+			t.Errorf("Expected to cast payload in handler")
+		}
+
+		return &event{Name: "event_reply"}, nil
+	}
+
+	if err := bus.On("topic", "chan", handler); err != nil {
+		t.Errorf("Expected to listen a message %s", err)
+	}
+
+	e := event{Name: "event"}
+	if err := bus.Request("topic", &e, replyHandler); err != nil {
 		t.Errorf("Expected to request a message %s", err)
 	}
 
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 }
 
 func TestEventBusOn(t *testing.T) {
@@ -51,24 +67,26 @@ func TestEventBusOn(t *testing.T) {
 		t.Errorf("Expected to initialize EventBus %s", err)
 	}
 
-	testHandler := func(msg interface{}) (interface{}, error) {
-		p := payload{}
-		if err := json.Unmarshal(msg.([]byte), &p); err != nil {
-			t.Errorf("Expected to unmarshal a message %s", err)
+	handler := func(payload interface{}) (interface{}, error) {
+		m, ok := payload.(map[string]interface{})
+		if !ok {
+			t.Errorf("Expected to cast payload in handler")
+		}
+
+		if m["Name"] != "event" {
+			t.Errorf("Expected name to be equal event %s", m["Name"])
 		}
 
 		return nil, nil
 	}
 
-	if err := bus.On("topic", "channel", testHandler); err != nil {
-		t.Errorf("Expected to listen a message %s", err)
+	e := event{Name: "event"}
+	if err := bus.Emit("topic", &e); err != nil {
+		t.Errorf("Expected to emit message %s", err)
 	}
 
-	time.Sleep(200 * time.Millisecond)
-
-	p := payload{Name: "event"}
-	if err := bus.Emit("topic", &Message{Payload: p}); err != nil {
-		t.Errorf("Expected to emit message %s", err)
+	if err := bus.On("topic", "channel", handler); err != nil {
+		t.Errorf("Expected to listen a message %s", err)
 	}
 
 	time.Sleep(200 * time.Millisecond)
