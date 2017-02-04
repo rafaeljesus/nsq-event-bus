@@ -67,6 +67,26 @@ func notificationsHandler(message []byte) error {
 
 ```
 
+### Request (Reply Queue)
+```go
+import "github.com/rafaeljesus/nsq-event-bus"
+
+eventBus, _ := eventbus.NewEventBus()
+
+if err := eventBus.Request("fetch", "channel", replyHandler); err != nil {
+  // handle failure to listen a message
+}
+
+func replyHandler(message interface{}) (interface{}, error) {
+	event := &Event{}
+	if err := json.Unmarshal(message.([]byte), &event); err != nil {
+		return err
+	}
+  // do something
+  return nil, nil
+}
+```
+
 ## Contributing
 - Fork it
 - Create your feature branch (`git checkout -b my-new-feature`)

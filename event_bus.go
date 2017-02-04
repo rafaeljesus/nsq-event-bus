@@ -1,6 +1,8 @@
 package eventbus
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	nsq "github.com/nsqio/go-nsq"
 	"os"
@@ -9,10 +11,9 @@ import (
 var NSQ_URL = os.Getenv("NSQ_URL")
 var NSQ_LOOKUPD_URL = os.Getenv("NSQ_LOOKUPD_URL")
 
-type fnHandler func(message []byte) error
-
 type EventBus interface {
-	Emit(topic string, message interface{}) error
+	Emit(topic string, message *Message) error
+	Request(topic string, message *Message, handler fnHandler) error
 	On(topic, channel string, handler fnHandler) error
 }
 
@@ -20,6 +21,13 @@ type Bus struct {
 	Producer *nsq.Producer
 	Config   *nsq.Config
 }
+
+type Message struct {
+	ReplyTo string
+	Payload interface{}
+}
+
+type fnHandler func(v interface{}) (interface{}, error)
 
 func init() {
 	if NSQ_URL == "" {
@@ -41,13 +49,30 @@ func NewEventBus() (EventBus, error) {
 	return &Bus{producer, config}, nil
 }
 
-func (bus *Bus) Emit(topic string, message interface{}) error {
+func (bus *Bus) Emit(topic string, message *Message) error {
 	payload, err := json.Marshal(message)
 	if err != nil {
 		return err
 	}
 
 	return bus.Producer.Publish(topic, payload)
+}
+
+func (bus *Bus) Request(topic string, message *Message, handler fnHandler) error {
+	reply, err := bus.genReplyQueue()
+	if err != nil {
+		return err
+	}
+
+	if err := bus.On(reply, reply, handler); err != nil {
+		return err
+	}
+
+	if err := bus.Emit(topic, message); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (bus *Bus) On(topic, channel string, handler fnHandler) error {
@@ -57,9 +82,25 @@ func (bus *Bus) On(topic, channel string, handler fnHandler) error {
 	}
 
 	consumer.AddHandler(nsq.HandlerFunc(func(message *nsq.Message) error {
-		if err := handler(message.Body); err != nil {
+		m := Message{}
+		if err := json.Unmarshal(message.Body, &m); err != nil {
 			return err
 		}
+
+		res, err := handler(m.Payload)
+		if err != nil {
+			return err
+		}
+
+		if m.ReplyTo == "" {
+			return nil
+		}
+
+		reply := Message{Payload: res}
+		if err := bus.Emit(m.ReplyTo, &reply); err != nil {
+			return err
+		}
+
 		return nil
 	}))
 
@@ -68,4 +109,14 @@ func (bus *Bus) On(topic, channel string, handler fnHandler) error {
 	}
 
 	return nil
+}
+
+func (bus *Bus) genReplyQueue() (string, error) {
+	b := make([]byte, 32)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	hash := hex.EncodeToString(b)
+	return hash, nil
 }
