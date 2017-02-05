@@ -1,6 +1,7 @@
 package eventbus
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 )
@@ -27,23 +28,23 @@ func TestEventBusRequest(t *testing.T) {
 		t.Errorf("Expected to initialize EventBus %s", err)
 	}
 
-	replyHandler := func(payload interface{}) (interface{}, error) {
-		m, ok := payload.(map[string]interface{})
-		if !ok {
-			t.Errorf("Expected to cast payload in handler")
+	replyHandler := func(payload []byte) (interface{}, error) {
+		e := event{}
+		if err := json.Unmarshal(payload, &e); err != nil {
+			t.Errorf("Expected to unmarshal payload")
 		}
 
-		if m["Name"] != "event_reply" {
-			t.Errorf("Expected name to be equal event %s", m["Name"])
+		if e.Name != "event_reply" {
+			t.Errorf("Expected name to be equal event %s", e.Name)
 		}
 
 		return nil, nil
 	}
 
-	handler := func(payload interface{}) (interface{}, error) {
-		_, ok := payload.(map[string]interface{})
-		if !ok {
-			t.Errorf("Expected to cast payload in handler")
+	handler := func(payload []byte) (interface{}, error) {
+		e := event{}
+		if err := json.Unmarshal(payload, &e); err != nil {
+			t.Errorf("Expected to unmarshal payload")
 		}
 
 		return &event{Name: "event_reply"}, nil
@@ -67,14 +68,14 @@ func TestEventBusOn(t *testing.T) {
 		t.Errorf("Expected to initialize EventBus %s", err)
 	}
 
-	handler := func(payload interface{}) (interface{}, error) {
-		m, ok := payload.(map[string]interface{})
-		if !ok {
-			t.Errorf("Expected to cast payload in handler")
+	handler := func(payload []byte) (interface{}, error) {
+		e := event{}
+		if err := json.Unmarshal(payload, &e); err != nil {
+			t.Errorf("Expected to unmarshal payload")
 		}
 
-		if m["Name"] != "event" {
-			t.Errorf("Expected name to be equal event %s", m["Name"])
+		if e.Name != "event" {
+			t.Errorf("Expected name to be equal event %s", e.Name)
 		}
 
 		return nil, nil

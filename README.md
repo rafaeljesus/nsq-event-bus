@@ -48,19 +48,19 @@ if err := eventBus.On(topic, notificationsChannel, notificationsHandler); err !=
   // handle failure to listen a message
 }
 
-func metricsHandler(payload interface{}) (interface{}, error) {
-  v, ok := payload.(map[string]interface{})
-  if !ok {
-    return nil, ErrPayloadInvalid
+func metricsHandler(payload []byte) (interface{}, error) {
+  e := event{}
+  if err := json.Unmarshal(payload, &e); err != nil {
+    // handle failure
   }
   // handle message
   return nil, nil
 }
 
-func notificationsHandler(payload interface{}) (interface{}, error) {
-  v, ok := payload.(map[string]interface{})
-  if !ok {
-    return nil, ErrPayloadInvalid
+func notificationsHandler(payload []byte) (interface{}, error) {
+  e := event{}
+  if err := json.Unmarshal(payload, &e); err != nil {
+    // handle failure
   }
   // handle message
   return nil, nil
@@ -80,10 +80,10 @@ if err := eventBus.Request(topic, &e, replyHandler); err != nil {
   // handle failure to listen a message
 }
 
-func replyHandler(message interface{}) (interface{}, error) {
-  v, ok := payload.(map[string]interface{})
-  if !ok {
-    return nil, ErrPayloadInvalid
+func replyHandler(payload []byte) (interface{}, error) {
+  e := event{}
+  if err := json.Unmarshal(payload, &e); err != nil {
+    // handle failure
   }
   // handle message
   return nil, nil

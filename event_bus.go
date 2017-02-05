@@ -27,10 +27,10 @@ type Bus struct {
 
 type Message struct {
 	ReplyTo string
-	Payload interface{}
+	Payload []byte
 }
 
-type fnHandler func(payload interface{}) (interface{}, error)
+type fnHandler func(payload []byte) (interface{}, error)
 
 func init() {
 	if NSQ_URL == "" {
@@ -53,7 +53,12 @@ func NewEventBus() (EventBus, error) {
 }
 
 func (bus *Bus) Emit(topic string, payload interface{}) error {
-	message := Message{Payload: payload}
+	p, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	message := Message{Payload: p}
 	body, err := json.Marshal(&message)
 	if err != nil {
 		return err
@@ -72,8 +77,13 @@ func (bus *Bus) Request(topic string, payload interface{}, handler fnHandler) er
 		return err
 	}
 
-	m := Message{replyTo, payload}
-	body, err := json.Marshal(&m)
+	p, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	message := Message{replyTo, p}
+	body, err := json.Marshal(&message)
 	if err != nil {
 		return err
 	}
@@ -97,12 +107,7 @@ func (bus *Bus) On(topic, channel string, handler fnHandler) error {
 			return err
 		}
 
-		payload, ok := m.Payload.(interface{})
-		if !ok {
-			return ErrInvalidPayload
-		}
-
-		res, err := handler(payload)
+		res, err := handler(m.Payload)
 		if err != nil {
 			return err
 		}
