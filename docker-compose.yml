@@ -79,3 +79,17 @@ services:
       - nsqlookupd-1
       - nsqlookupd-2
       - nsqlookupd-3
+
+  nsqadmin:
+    image: nsqio/nsq
+    command: >
+      /nsqadmin
+      -lookupd-http-address nsqlookupd-1:4161
+      -lookupd-http-address nsqlookupd-2:4161
+      -lookupd-http-address nsqlookupd-3:4161
+    ports:
+      - 4171:4171
+    depends_on:
+      - nsqlookupd-1
+      - nsqlookupd-2
+      - nsqlookupd-3
