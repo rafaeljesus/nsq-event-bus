@@ -5,7 +5,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	nsq "github.com/nsqio/go-nsq"
+	"net/http"
+	"net/url"
 	"os"
 )
 
@@ -73,6 +76,10 @@ func (bus *Bus) Request(topic string, payload interface{}, handler fnHandler) er
 		return err
 	}
 
+	if err := bus.createTopic(replyTo); err != nil {
+		return nil
+	}
+
 	if err := bus.On(replyTo, replyTo, handler); err != nil {
 		return err
 	}
@@ -131,13 +138,33 @@ func (bus *Bus) On(topic, channel string, handler fnHandler) error {
 }
 
 func (bus *Bus) genReplyQueue() (string, error) {
-	b := make([]byte, 32)
+	b := make([]byte, 8)
 	_, err := rand.Read(b)
 	if err != nil {
 		return "", err
 	}
 
 	hash := hex.EncodeToString(b)
+	reply := fmt.Sprint(hash, ".ephemeral")
 
-	return hash, nil
+	return reply, nil
+}
+
+func (bus *Bus) createTopic(topic string) error {
+	u, err := url.Parse(NSQ_URL)
+	if err != nil {
+		return err
+	}
+
+	uri := "http://" + u.Host + ":4151/topic/create?topic=" + topic
+	res, err := http.Post(uri, "application/json; charset=utf-8", nil)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != 200 {
+		return err
+	}
+
+	return nil
 }

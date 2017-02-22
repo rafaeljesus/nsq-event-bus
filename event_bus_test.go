@@ -2,8 +2,8 @@ package eventbus
 
 import (
 	"encoding/json"
+	"sync"
 	"testing"
-	"time"
 )
 
 type event struct {
@@ -28,6 +28,9 @@ func TestEventBusRequest(t *testing.T) {
 		t.Errorf("Expected to initialize EventBus %s", err)
 	}
 
+	var wg sync.WaitGroup
+	wg.Add(1)
+
 	replyHandler := func(payload []byte) (interface{}, error) {
 		e := event{}
 		if err := json.Unmarshal(payload, &e); err != nil {
@@ -37,6 +40,8 @@ func TestEventBusRequest(t *testing.T) {
 		if e.Name != "event_reply" {
 			t.Errorf("Expected name to be equal event %s", e.Name)
 		}
+
+		wg.Done()
 
 		return nil, nil
 	}
@@ -59,7 +64,7 @@ func TestEventBusRequest(t *testing.T) {
 		t.Errorf("Expected to request a message %s", err)
 	}
 
-	time.Sleep(500 * time.Millisecond)
+	wg.Wait()
 }
 
 func TestEventBusOn(t *testing.T) {
@@ -67,6 +72,9 @@ func TestEventBusOn(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected to initialize EventBus %s", err)
 	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
 
 	handler := func(payload []byte) (interface{}, error) {
 		e := event{}
@@ -77,6 +85,8 @@ func TestEventBusOn(t *testing.T) {
 		if e.Name != "event" {
 			t.Errorf("Expected name to be equal event %s", e.Name)
 		}
+
+		wg.Done()
 
 		return nil, nil
 	}
@@ -90,5 +100,5 @@ func TestEventBusOn(t *testing.T) {
 		t.Errorf("Expected to listen a message %s", err)
 	}
 
-	time.Sleep(200 * time.Millisecond)
+	wg.Wait()
 }
