@@ -9,6 +9,7 @@ import (
 	nsq "github.com/nsqio/go-nsq"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -152,7 +153,12 @@ func (bus *Bus) genReplyQueue() (string, error) {
 
 func (bus *Bus) createTopic(topic string) error {
 	s := strings.Split(NSQ_URL, ":")
-	uri := "http://" + s[0] + ":" + s[1] + "/topic/create?topic=" + topic
+	port, err := strconv.Atoi(s[1])
+	if err != nil {
+		return err
+	}
+
+	uri := "http://" + s[0] + ":" + strconv.Itoa(port+1) + "/topic/create?topic=" + topic
 	res, err := http.Post(uri, "application/json; charset=utf-8", nil)
 	if err != nil {
 		return err
