@@ -8,8 +8,9 @@ import (
 	"fmt"
 	nsq "github.com/nsqio/go-nsq"
 	"net/http"
-	"net/url"
 	"os"
+	"strconv"
+	"strings"
 )
 
 var NSQ_URL = os.Getenv("NSQ_URL")
@@ -77,7 +78,7 @@ func (bus *Bus) Request(topic string, payload interface{}, handler fnHandler) er
 	}
 
 	if err := bus.createTopic(replyTo); err != nil {
-		return nil
+		return err
 	}
 
 	if err := bus.On(replyTo, replyTo, handler); err != nil {
@@ -151,12 +152,13 @@ func (bus *Bus) genReplyQueue() (string, error) {
 }
 
 func (bus *Bus) createTopic(topic string) error {
-	u, err := url.Parse(NSQ_URL)
+	s := strings.Split(NSQ_URL, ":")
+	port, err := strconv.Atoi(s[1])
 	if err != nil {
 		return err
 	}
 
-	uri := "http://" + u.Host + ":4151/topic/create?topic=" + topic
+	uri := "http://" + s[0] + ":" + strconv.Itoa(port+1) + "/topic/create?topic=" + topic
 	res, err := http.Post(uri, "application/json; charset=utf-8", nil)
 	if err != nil {
 		return err

@@ -91,13 +91,13 @@ func TestEventBusOn(t *testing.T) {
 		return nil, nil
 	}
 
+	if err := bus.On("topic", "channel", handler); err != nil {
+		t.Errorf("Expected to listen a message %s", err)
+	}
+
 	e := event{Name: "event"}
 	if err := bus.Emit("topic", &e); err != nil {
 		t.Errorf("Expected to emit message %s", err)
-	}
-
-	if err := bus.On("topic", "channel", handler); err != nil {
-		t.Errorf("Expected to listen a message %s", err)
 	}
 
 	wg.Wait()

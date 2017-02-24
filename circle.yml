@@ -12,7 +12,7 @@ dependencies:
     - cp nsq-0.3.8.linux-amd64.go1.6.2/bin/* .
     - ./nsqlookupd:
         background: true
-    - ./nsqd --lookupd-tcp-address=127.0.0.1:4160:
+    - ./nsqd --lookupd-tcp-address=127.0.0.1:4160 --broadcast-address=127.0.0.1:
         background: true
     - sudo add-apt-repository ppa:masterminds/glide -y
     - sudo apt-get update
