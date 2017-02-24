@@ -78,7 +78,7 @@ func (bus *Bus) Request(topic string, payload interface{}, handler fnHandler) er
 	}
 
 	if err := bus.createTopic(replyTo); err != nil {
-		return nil
+		return err
 	}
 
 	if err := bus.On(replyTo, replyTo, handler); err != nil {
