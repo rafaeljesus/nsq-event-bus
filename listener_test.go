@@ -22,9 +22,9 @@ func TestListenerOn(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	handler := func(payload []byte) (interface{}, error) {
+	handler := func(payload []byte) (reply interface{}, err error) {
 		e := event{}
-		if err := json.Unmarshal(payload, &e); err != nil {
+		if err = json.Unmarshal(payload, &e); err != nil {
 			t.Errorf("Expected to unmarshal payload")
 		}
 
@@ -33,13 +33,12 @@ func TestListenerOn(t *testing.T) {
 		}
 
 		wg.Done()
-
-		return nil, nil
+		return
 	}
 
 	if err := On(ListenerConfig{
 		Topic:       "topic",
-		Channel:     "test",
+		Channel:     "test_on",
 		HandlerFunc: handler,
 	}); err != nil {
 		t.Errorf("Expected to listen a message %s", err)

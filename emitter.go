@@ -1,15 +1,22 @@
 package eventbus
 
 import (
+	"crypto/rand"
 	"crypto/tls"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	nsq "github.com/nsqio/go-nsq"
 	"net"
+	"net/http"
+	"strconv"
+	"strings"
 	"time"
 )
 
 type Emitter interface {
 	Emit(topic string, payload interface{}) error
+	Request(topic string, payload interface{}, handler handlerFunc) error
 }
 
 type EmitterConfig struct {
@@ -47,6 +54,7 @@ type EmitterConfig struct {
 
 type EventEmitter struct {
 	*nsq.Producer
+	address string
 }
 
 func NewEmitter(ec EmitterConfig) (emitter Emitter, err error) {
@@ -62,7 +70,7 @@ func NewEmitter(ec EmitterConfig) (emitter Emitter, err error) {
 		return
 	}
 
-	emitter = &EventEmitter{producer}
+	emitter = &EventEmitter{producer, address}
 
 	return
 }
@@ -80,6 +88,42 @@ func (ee EventEmitter) Emit(topic string, payload interface{}) (err error) {
 	}
 
 	err = ee.Publish(topic, body)
+
+	return
+}
+
+func (ee EventEmitter) Request(topic string, payload interface{}, handler handlerFunc) (err error) {
+	replyTo, err := ee.genReplyQueue()
+	if err != nil {
+		return
+	}
+
+	if err = ee.createTopic(replyTo); err != nil {
+		return
+	}
+
+	if err = On(ListenerConfig{
+		Topic:       replyTo,
+		Channel:     replyTo,
+		HandlerFunc: handler,
+	}); err != nil {
+		return
+	}
+
+	p, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+
+	message := Message{replyTo, p}
+	body, err := json.Marshal(&message)
+	if err != nil {
+		return
+	}
+
+	if err = ee.Publish(topic, body); err != nil {
+		return
+	}
 
 	return
 }
@@ -189,6 +233,39 @@ func newEmitterConfig(ec EmitterConfig) (config *nsq.Config) {
 
 	if ec.AuthSecret != "" {
 		config.AuthSecret = ec.AuthSecret
+	}
+
+	return
+}
+
+func (ee EventEmitter) genReplyQueue() (replyTo string, err error) {
+	b := make([]byte, 8)
+	_, err = rand.Read(b)
+	if err != nil {
+		return
+	}
+
+	hash := hex.EncodeToString(b)
+	replyTo = fmt.Sprint(hash, ".ephemeral")
+
+	return
+}
+
+func (ee EventEmitter) createTopic(topic string) (err error) {
+	s := strings.Split(ee.address, ":")
+	port, err := strconv.Atoi(s[1])
+	if err != nil {
+		return
+	}
+
+	uri := "http://" + s[0] + ":" + strconv.Itoa(port+1) + "/topic/create?topic=" + topic
+	res, err := http.Post(uri, "application/json; charset=utf-8", nil)
+	if err != nil {
+		return
+	}
+
+	if res.StatusCode != 200 {
+		return
 	}
 
 	return

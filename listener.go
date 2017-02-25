@@ -83,18 +83,19 @@ func On(lc ListenerConfig) (err error) {
 			return
 		}
 
-		_, err = lc.HandlerFunc(m.Payload)
+		res, err := lc.HandlerFunc(m.Payload)
 		if err != nil {
 			return
 		}
 
-		// if m.ReplyTo == "" {
-		// 	return
-		// }
-		//
-		// if err := bus.Emit(m.ReplyTo, res); err != nil {
-		// 	return
-		// }
+		if m.ReplyTo == "" {
+			return
+		}
+
+		emitter, err := NewEmitter(EmitterConfig{})
+		if err = emitter.Emit(m.ReplyTo, res); err != nil {
+			return
+		}
 
 		return
 	}))
