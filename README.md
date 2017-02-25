@@ -7,12 +7,6 @@
 go get -u https://github.com/rafaeljesus/nsq-event-bus
 ```
 
-## Environment Variables
-```bash
-export NSQ_URL=localhost:4150
-export NSQ_LOOKUPD_URL=localhost:4161
-```
-
 ## Usage
 The nsq-event-bus package exposes a interface for emitting and listening events.
 
@@ -21,11 +15,18 @@ The nsq-event-bus package exposes a interface for emitting and listening events.
 import "github.com/rafaeljesus/nsq-event-bus"
 
 topic := "events"
-var event struct{}
-eventBus, _ := eventbus.NewEventBus()
+emitter, err := bus.NewEmitter(EmitterConfig{
+  Address: "localhost:4150",
+  MaxInFlight: 25,
+})
 
 e := event{}
-if err := eventBus.Emit(topic, &e); err != nil {
+if err = emitter.Emit(topic, &e); err != nil {
+  // handle failure to emit message
+}
+
+// emitting messages on a async fashion
+if err = emitter.EmitAsync(topic, &e); err != nil {
   // handle failure to emit message
 }
 
@@ -35,37 +36,24 @@ if err := eventBus.Emit(topic, &e); err != nil {
 ```go
 import "github.com/rafaeljesus/nsq-event-bus"
 
-topic := "events"
-metricsChannel := "metrics"
-notificationsChannel := "notifications"
-eventBus, _ := eventbus.NewEventBus()
+if err = bus.On(bus.ListenerConfig{
+  Topic:       "topic",
+  Channel:     "test_on",
+  HandlerFunc: handler,
+  HandlerConcurrency: 4,
 
-if err := eventBus.On(topic, metricsChannel, metricsHandler); err != nil {
+}); err != nil {
   // handle failure to listen a message
 }
 
-if err := eventBus.On(topic, notificationsChannel, notificationsHandler); err != nil {
-  // handle failure to listen a message
-}
-
-func metricsHandler(payload []byte) (interface{}, error) {
+func handler(payload []byte) (reply interface{}, err error) {
   e := event{}
-  if err := json.Unmarshal(payload, &e); err != nil {
+  if err = json.Unmarshal(payload, &e); err != nil {
     // handle failure
   }
   // handle message
-  return nil, nil
+  return
 }
-
-func notificationsHandler(payload []byte) (interface{}, error) {
-  e := event{}
-  if err := json.Unmarshal(payload, &e); err != nil {
-    // handle failure
-  }
-  // handle message
-  return nil, nil
-}
-
 ```
 
 ### Request (Request/Reply)
@@ -73,20 +61,20 @@ func notificationsHandler(payload []byte) (interface{}, error) {
 import "github.com/rafaeljesus/nsq-event-bus"
 
 topic := "user_signup"
-eventBus, _ := eventbus.NewEventBus()
+emitter, err = bus.NewEmitter(bus.EmitterConfig{})
 
 e := event{Login: "rafa", Password: "ilhabela_is_the_place"}
-if err := eventBus.Request(topic, &e, replyHandler); err != nil {
+if err := bus.Request(topic, &e, handler); err != nil {
   // handle failure to listen a message
 }
 
-func replyHandler(payload []byte) (interface{}, error) {
+func handler(payload []byte) (reply interface{}, err error) {
   e := event{}
   if err := json.Unmarshal(payload, &e); err != nil {
     // handle failure
   }
-  // handle message
-  return nil, nil
+  reply = &Reply{}
+  return
 }
 ```
 
