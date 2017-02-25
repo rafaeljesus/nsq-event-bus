@@ -17,7 +17,7 @@ var (
 type handlerFunc func(payload []byte) (interface{}, error)
 
 type Listener interface {
-	On(ListenerConfig) error
+	On(lc ListenerConfig) error
 }
 
 type ListenerConfig struct {
@@ -103,6 +103,8 @@ func handleMessage(consumer *nsq.Consumer, lc ListenerConfig) nsq.HandlerFunc {
 		if err != nil {
 			return
 		}
+
+		message.Finish()
 
 		if m.ReplyTo == "" {
 			return
