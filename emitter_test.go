@@ -15,7 +15,7 @@ func TestEmitterEmit(t *testing.T) {
 	type event struct{ Name string }
 	e := event{"event"}
 
-	if err := emitter.Emit("topic", &e); err != nil {
+	if err := emitter.Emit("etopic", &e); err != nil {
 		t.Errorf("Expected to emit message %s", err)
 	}
 }
@@ -29,7 +29,7 @@ func TestEmitterEmitAsync(t *testing.T) {
 	type event struct{ Name string }
 	e := event{"event"}
 
-	if err := emitter.EmitAsync("topic", &e); err != nil {
+	if err := emitter.EmitAsync("etopic", &e); err != nil {
 		t.Errorf("Expected to emit message %s", err)
 	}
 }
@@ -69,7 +69,7 @@ func TestEmitterRequest(t *testing.T) {
 	}
 
 	if err := On(ListenerConfig{
-		Topic:       "topic",
+		Topic:       "etopic",
 		Channel:     "test_request",
 		HandlerFunc: handler,
 	}); err != nil {
@@ -77,7 +77,7 @@ func TestEmitterRequest(t *testing.T) {
 	}
 
 	e := event{"event"}
-	if err := emitter.Request("topic", &e, replyHandler); err != nil {
+	if err := emitter.Request("etopic", &e, replyHandler); err != nil {
 		t.Errorf("Expected to request a message %s", err)
 	}
 

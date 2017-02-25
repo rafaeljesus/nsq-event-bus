@@ -15,7 +15,7 @@ func TestListenerOn(t *testing.T) {
 	}
 
 	e := event{"event"}
-	if err := emitter.Emit("topic", &e); err != nil {
+	if err := emitter.Emit("ltopic", &e); err != nil {
 		t.Errorf("Expected to emit message %s", err)
 	}
 
@@ -37,7 +37,7 @@ func TestListenerOn(t *testing.T) {
 	}
 
 	if err := On(ListenerConfig{
-		Topic:       "topic",
+		Topic:       "ltopic",
 		Channel:     "test_on",
 		HandlerFunc: handler,
 	}); err != nil {
