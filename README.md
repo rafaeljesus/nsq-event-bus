@@ -25,6 +25,11 @@ if err = emitter.Emit(topic, &e); err != nil {
   // handle failure to emit message
 }
 
+// emitting messages on a async fashion
+if err = emitter.EmitAsync(topic, &e); err != nil {
+  // handle failure to emit message
+}
+
 ```
 
 ### Listener
