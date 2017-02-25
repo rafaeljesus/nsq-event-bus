@@ -1,4 +1,4 @@
-package eventbus
+package bus
 
 type Message struct {
 	ReplyTo string
