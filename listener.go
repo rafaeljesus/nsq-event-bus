@@ -77,7 +77,18 @@ func On(lc ListenerConfig) (err error) {
 		return
 	}
 
-	consumer.AddHandler(nsq.HandlerFunc(func(message *nsq.Message) (err error) {
+	handler := handleMessage(consumer, lc)
+	consumer.AddHandler(handler)
+
+	if err = consumer.ConnectToNSQLookupds(lc.Lookup); err != nil {
+		return
+	}
+
+	return
+}
+
+func handleMessage(consumer *nsq.Consumer, lc ListenerConfig) nsq.HandlerFunc {
+	return nsq.HandlerFunc(func(message *nsq.Message) (err error) {
 		m := Message{}
 		if err = json.Unmarshal(message.Body, &m); err != nil {
 			return
@@ -93,19 +104,13 @@ func On(lc ListenerConfig) (err error) {
 		}
 
 		emitter, err := NewEmitter(EmitterConfig{})
-		defer emitter.Stop()
+		// emitter.Stop()
 		if err = emitter.Emit(m.ReplyTo, res); err != nil {
 			return
 		}
 
 		return
-	}))
-
-	if err = consumer.ConnectToNSQLookupds(lc.Lookup); err != nil {
-		return
-	}
-
-	return
+	})
 }
 
 func newListenerConfig(lc ListenerConfig) (config *nsq.Config) {
