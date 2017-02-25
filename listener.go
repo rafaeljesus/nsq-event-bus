@@ -93,6 +93,7 @@ func On(lc ListenerConfig) (err error) {
 		}
 
 		emitter, err := NewEmitter(EmitterConfig{})
+		defer emitter.Stop()
 		if err = emitter.Emit(m.ReplyTo, res); err != nil {
 			return
 		}

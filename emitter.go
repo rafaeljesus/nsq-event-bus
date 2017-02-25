@@ -17,6 +17,7 @@ import (
 type Emitter interface {
 	Emit(topic string, payload interface{}) error
 	Request(topic string, payload interface{}, handler handlerFunc) error
+	Stop()
 }
 
 type EmitterConfig struct {
@@ -126,6 +127,10 @@ func (ee EventEmitter) Request(topic string, payload interface{}, handler handle
 	}
 
 	return
+}
+
+func (ee EventEmitter) Stop() {
+	ee.Stop()
 }
 
 func newEmitterConfig(ec EmitterConfig) (config *nsq.Config) {
