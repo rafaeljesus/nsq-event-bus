@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	nsq "github.com/nsqio/go-nsq"
+	"log"
 	"net"
 	"net/http"
 	"strconv"
@@ -16,6 +17,7 @@ import (
 
 type Emitter interface {
 	Emit(topic string, payload interface{}) error
+	EmitAsync(topic string, payload interface{}) error
 	Request(topic string, payload interface{}, handler handlerFunc) error
 	Stop()
 }
@@ -77,18 +79,38 @@ func NewEmitter(ec EmitterConfig) (emitter Emitter, err error) {
 }
 
 func (ee EventEmitter) Emit(topic string, payload interface{}) (err error) {
-	p, err := json.Marshal(payload)
-	if err != nil {
-		return
-	}
-
-	message := Message{Payload: p}
-	body, err := json.Marshal(&message)
+	body, err := ee.encodeMessage(payload, "")
 	if err != nil {
 		return
 	}
 
 	err = ee.Publish(topic, body)
+
+	return
+}
+
+func (ee EventEmitter) EmitAsync(topic string, payload interface{}) (err error) {
+	body, err := ee.encodeMessage(payload, "")
+	if err != nil {
+		return
+	}
+
+	responseChan := make(chan *nsq.ProducerTransaction, 1)
+
+	if err = ee.PublishAsync(topic, body, responseChan, ""); err != nil {
+		return
+	}
+
+	go func(responseChan chan *nsq.ProducerTransaction) {
+		for {
+			select {
+			case trans := <-responseChan:
+				if trans.Error != nil {
+					log.Fatalf(trans.Error.Error())
+				}
+			}
+		}
+	}(responseChan)
 
 	return
 }
@@ -111,13 +133,7 @@ func (ee EventEmitter) Request(topic string, payload interface{}, handler handle
 		return
 	}
 
-	p, err := json.Marshal(payload)
-	if err != nil {
-		return
-	}
-
-	message := Message{replyTo, p}
-	body, err := json.Marshal(&message)
+	body, err := ee.encodeMessage(payload, replyTo)
 	if err != nil {
 		return
 	}
@@ -131,6 +147,51 @@ func (ee EventEmitter) Request(topic string, payload interface{}, handler handle
 
 func (ee EventEmitter) Stop() {
 	ee.Stop()
+}
+
+func (ee EventEmitter) encodeMessage(payload interface{}, replyTo string) (body []byte, err error) {
+	p, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+
+	message := Message{Payload: p, ReplyTo: replyTo}
+	body, err = json.Marshal(&message)
+
+	return
+}
+
+func (ee EventEmitter) genReplyQueue() (replyTo string, err error) {
+	b := make([]byte, 8)
+	_, err = rand.Read(b)
+	if err != nil {
+		return
+	}
+
+	hash := hex.EncodeToString(b)
+	replyTo = fmt.Sprint(hash, ".ephemeral")
+
+	return
+}
+
+func (ee EventEmitter) createTopic(topic string) (err error) {
+	s := strings.Split(ee.address, ":")
+	port, err := strconv.Atoi(s[1])
+	if err != nil {
+		return
+	}
+
+	uri := "http://" + s[0] + ":" + strconv.Itoa(port+1) + "/topic/create?topic=" + topic
+	res, err := http.Post(uri, "application/json; charset=utf-8", nil)
+	if err != nil {
+		return
+	}
+
+	if res.StatusCode != 200 {
+		return
+	}
+
+	return
 }
 
 func newEmitterConfig(ec EmitterConfig) (config *nsq.Config) {
@@ -238,39 +299,6 @@ func newEmitterConfig(ec EmitterConfig) (config *nsq.Config) {
 
 	if ec.AuthSecret != "" {
 		config.AuthSecret = ec.AuthSecret
-	}
-
-	return
-}
-
-func (ee EventEmitter) genReplyQueue() (replyTo string, err error) {
-	b := make([]byte, 8)
-	_, err = rand.Read(b)
-	if err != nil {
-		return
-	}
-
-	hash := hex.EncodeToString(b)
-	replyTo = fmt.Sprint(hash, ".ephemeral")
-
-	return
-}
-
-func (ee EventEmitter) createTopic(topic string) (err error) {
-	s := strings.Split(ee.address, ":")
-	port, err := strconv.Atoi(s[1])
-	if err != nil {
-		return
-	}
-
-	uri := "http://" + s[0] + ":" + strconv.Itoa(port+1) + "/topic/create?topic=" + topic
-	res, err := http.Post(uri, "application/json; charset=utf-8", nil)
-	if err != nil {
-		return
-	}
-
-	if res.StatusCode != 200 {
-		return
 	}
 
 	return

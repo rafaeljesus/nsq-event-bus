@@ -104,7 +104,6 @@ func handleMessage(consumer *nsq.Consumer, lc ListenerConfig) nsq.HandlerFunc {
 		}
 
 		emitter, err := NewEmitter(EmitterConfig{})
-		// emitter.Stop()
 		if err = emitter.Emit(m.ReplyTo, res); err != nil {
 			return
 		}

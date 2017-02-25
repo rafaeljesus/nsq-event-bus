@@ -20,6 +20,20 @@ func TestEmitterEmit(t *testing.T) {
 	}
 }
 
+func TestEmitterEmitAsync(t *testing.T) {
+	emitter, err := NewEmitter(EmitterConfig{})
+	if err != nil {
+		t.Errorf("Expected to initialize emitter %s", err)
+	}
+
+	type event struct{ Name string }
+	e := event{"event"}
+
+	if err := emitter.EmitAsync("topic", &e); err != nil {
+		t.Errorf("Expected to emit message %s", err)
+	}
+}
+
 func TestEmitterRequest(t *testing.T) {
 	emitter, err := NewEmitter(EmitterConfig{})
 	if err != nil {
