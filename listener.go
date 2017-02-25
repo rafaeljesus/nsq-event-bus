@@ -25,6 +25,7 @@ type ListenerConfig struct {
 	Channel                 string
 	Lookup                  []string
 	HandlerFunc             handlerFunc
+	HandlerConcurrency      int
 	DialTimeout             time.Duration
 	ReadTimeout             time.Duration
 	WriteTimeout            time.Duration
@@ -71,6 +72,10 @@ func On(lc ListenerConfig) (err error) {
 		lc.Lookup = []string{"localhost:4161"}
 	}
 
+	if lc.HandlerConcurrency == 0 {
+		lc.HandlerConcurrency = 1
+	}
+
 	config := newListenerConfig(lc)
 	consumer, err := nsq.NewConsumer(lc.Topic, lc.Channel, config)
 	if err != nil {
@@ -78,7 +83,7 @@ func On(lc ListenerConfig) (err error) {
 	}
 
 	handler := handleMessage(consumer, lc)
-	consumer.AddHandler(handler)
+	consumer.AddConcurrentHandlers(handler, lc.HandlerConcurrency)
 
 	if err = consumer.ConnectToNSQLookupds(lc.Lookup); err != nil {
 		return

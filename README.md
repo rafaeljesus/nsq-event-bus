@@ -40,6 +40,8 @@ if err = bus.On(bus.ListenerConfig{
   Topic:       "topic",
   Channel:     "test_on",
   HandlerFunc: handler,
+  HandlerConcurrency: 4,
+
 }); err != nil {
   // handle failure to listen a message
 }
