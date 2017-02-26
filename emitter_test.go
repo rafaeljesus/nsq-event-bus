@@ -5,6 +5,31 @@ import (
 	"testing"
 )
 
+func TestNewEmitter(t *testing.T) {
+	var addressesTest = []struct {
+		addr   string
+		expect string
+	}{
+		{"", "localhost:4150"},
+		{"new-address", "new-address"},
+	}
+
+	for _, a := range addressesTest {
+		emitter, err := NewEmitter(EmitterConfig{
+			Address: a.addr,
+		})
+
+		if err != nil {
+			t.Errorf("Expected to initialize emitter %s", err)
+		}
+
+		e := emitter.(*EventEmitter)
+		if e.String() != a.expect {
+			t.Errorf("Expected emitter address %s, got %s", a.expect, e.String())
+		}
+	}
+}
+
 func TestEmitterEmit(t *testing.T) {
 	emitter, err := NewEmitter(EmitterConfig{})
 	if err != nil {

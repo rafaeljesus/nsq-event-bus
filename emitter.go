@@ -63,8 +63,8 @@ type EventEmitter struct {
 func NewEmitter(ec EmitterConfig) (emitter Emitter, err error) {
 	config := newEmitterConfig(ec)
 
-	var address string
-	if len(ec.Address) == 0 {
+	address := ec.Address
+	if len(address) == 0 {
 		address = "localhost:4150"
 	}
 
