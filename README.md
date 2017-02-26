@@ -45,12 +45,25 @@ if err = bus.On(bus.ListenerConfig{
   // handle failure to listen a message
 }
 
-func handler(payload []byte) (reply interface{}, err error) {
+func handler(message *Message) (reply interface{}, err error) {
   e := event{}
-  if err = json.Unmarshal(payload, &e); err != nil {
-    // handle failure
+  if err = message.DecodePayload(&e); err != nil {
+    message.Finish()
+    return
   }
-  // handle message
+
+  if message.Attempts > MAX_DELIVERY_ATTEMPTS {
+    message.Finish()
+    return
+  }
+
+  err, _ = doWork(&e)
+  if err != nil {
+    message.Requeue(BACKOFF_TIME)
+    return
+  }
+
+  message.Finish()
   return
 }
 ```
@@ -67,12 +80,15 @@ if err = bus.Request(topic, &e, handler); err != nil {
   // handle failure to listen a message
 }
 
-func handler(payload []byte) (reply interface{}, err error) {
+func handler(message *Message) (reply interface{}, err error) {
   e := event{}
-  if err = json.Unmarshal(payload, &e); err != nil {
-    // handle failure
+  if err = message.Decode(&e); err != nil {
+    message.Finish()
+    return
   }
+
   reply = &Reply{}
+  message.Finish()
   return
 }
 ```
