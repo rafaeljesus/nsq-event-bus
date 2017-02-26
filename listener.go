@@ -14,7 +14,7 @@ var (
 	ChannelRequired = errors.New("creating a new consumer requires a non-empty channel")
 )
 
-type handlerFunc func(payload []byte) (interface{}, error)
+type handlerFunc func(m *Message) (interface{}, error)
 
 type Listener interface {
 	On(lc ListenerConfig) error
@@ -82,7 +82,7 @@ func On(lc ListenerConfig) (err error) {
 		return
 	}
 
-	handler := handleMessage(consumer, lc)
+	handler := handleMessage(lc)
 	consumer.AddConcurrentHandlers(handler, lc.HandlerConcurrency)
 
 	if err = consumer.ConnectToNSQLookupds(lc.Lookup); err != nil {
@@ -92,19 +92,17 @@ func On(lc ListenerConfig) (err error) {
 	return
 }
 
-func handleMessage(consumer *nsq.Consumer, lc ListenerConfig) nsq.HandlerFunc {
+func handleMessage(lc ListenerConfig) nsq.HandlerFunc {
 	return nsq.HandlerFunc(func(message *nsq.Message) (err error) {
-		m := Message{}
+		m := Message{Message: message}
 		if err = json.Unmarshal(message.Body, &m); err != nil {
 			return
 		}
 
-		res, err := lc.HandlerFunc(m.Payload)
+		res, err := lc.HandlerFunc(&m)
 		if err != nil {
 			return
 		}
-
-		message.Finish()
 
 		if m.ReplyTo == "" {
 			return

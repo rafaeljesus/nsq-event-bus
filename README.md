@@ -37,21 +37,33 @@ if err = emitter.EmitAsync(topic, &e); err != nil {
 import "github.com/rafaeljesus/nsq-event-bus"
 
 if err = bus.On(bus.ListenerConfig{
-  Topic:       "topic",
-  Channel:     "test_on",
-  HandlerFunc: handler,
+  Topic:              "topic",
+  Channel:            "test_on",
+  HandlerFunc:        handler,
   HandlerConcurrency: 4,
-
 }); err != nil {
   // handle failure to listen a message
 }
 
-func handler(payload []byte) (reply interface{}, err error) {
+func handler(message *Message) (reply interface{}, err error) {
   e := event{}
-  if err = json.Unmarshal(payload, &e); err != nil {
-    // handle failure
+  if err = message.DecodePayload(&e); err != nil {
+    message.Finish()
+    return
   }
-  // handle message
+
+  if message.Attempts > MAX_DELIVERY_ATTEMPTS {
+    message.Finish()
+    return
+  }
+
+  err, _ = doWork(&e)
+  if err != nil {
+    message.Requeue(BACKOFF_TIME)
+    return
+  }
+
+  message.Finish()
   return
 }
 ```
@@ -64,16 +76,19 @@ topic := "user_signup"
 emitter, err = bus.NewEmitter(bus.EmitterConfig{})
 
 e := event{Login: "rafa", Password: "ilhabela_is_the_place"}
-if err := bus.Request(topic, &e, handler); err != nil {
+if err = bus.Request(topic, &e, handler); err != nil {
   // handle failure to listen a message
 }
 
-func handler(payload []byte) (reply interface{}, err error) {
+func handler(message *Message) (reply interface{}, err error) {
   e := event{}
-  if err := json.Unmarshal(payload, &e); err != nil {
-    // handle failure
+  if err = message.Decode(&e); err != nil {
+    message.Finish()
+    return
   }
+
   reply = &Reply{}
+  message.Finish()
   return
 }
 ```
