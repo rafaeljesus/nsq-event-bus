@@ -41,7 +41,6 @@ if err = bus.On(bus.ListenerConfig{
   Channel:     "test_on",
   HandlerFunc: handler,
   HandlerConcurrency: 4,
-
 }); err != nil {
   // handle failure to listen a message
 }
@@ -64,13 +63,13 @@ topic := "user_signup"
 emitter, err = bus.NewEmitter(bus.EmitterConfig{})
 
 e := event{Login: "rafa", Password: "ilhabela_is_the_place"}
-if err := bus.Request(topic, &e, handler); err != nil {
+if err = bus.Request(topic, &e, handler); err != nil {
   // handle failure to listen a message
 }
 
 func handler(payload []byte) (reply interface{}, err error) {
   e := event{}
-  if err := json.Unmarshal(payload, &e); err != nil {
+  if err = json.Unmarshal(payload, &e); err != nil {
     // handle failure
   }
   reply = &Reply{}

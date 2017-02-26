@@ -1,7 +1,6 @@
 package bus
 
 import (
-	"encoding/json"
 	"sync"
 	"testing"
 )
@@ -45,9 +44,9 @@ func TestEmitterRequest(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	replyHandler := func(payload []byte) (reply interface{}, err error) {
+	replyHandler := func(message *Message) (reply interface{}, err error) {
 		e := event{}
-		if err = json.Unmarshal(payload, &e); err != nil {
+		if err = message.DecodePayload(&e); err != nil {
 			t.Errorf("Expected to unmarshal payload")
 		}
 
@@ -55,16 +54,18 @@ func TestEmitterRequest(t *testing.T) {
 			t.Errorf("Expected name to be equal event %s", e.Name)
 		}
 
+		message.Finish()
 		wg.Done()
 		return
 	}
 
-	handler := func(payload []byte) (reply interface{}, err error) {
+	handler := func(message *Message) (reply interface{}, err error) {
 		e := event{}
-		if err = json.Unmarshal(payload, &e); err != nil {
+		if err = message.DecodePayload(&e); err != nil {
 			t.Errorf("Expected to unmarshal payload")
 		}
 		reply = &event{"event_reply"}
+		message.Finish()
 		return
 	}
 
