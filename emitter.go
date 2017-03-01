@@ -138,9 +138,7 @@ func (ee EventEmitter) Request(topic string, payload interface{}, handler handle
 		return
 	}
 
-	if err = ee.Publish(topic, body); err != nil {
-		return
-	}
+	err = ee.Publish(topic, body)
 
 	return
 }
@@ -182,14 +180,7 @@ func (ee EventEmitter) createTopic(topic string) (err error) {
 	}
 
 	uri := "http://" + s[0] + ":" + strconv.Itoa(port+1) + "/topic/create?topic=" + topic
-	res, err := http.Post(uri, "application/json; charset=utf-8", nil)
-	if err != nil {
-		return
-	}
-
-	if res.StatusCode != 200 {
-		return
-	}
+	_, err = http.Post(uri, "application/json; charset=utf-8", nil)
 
 	return
 }
