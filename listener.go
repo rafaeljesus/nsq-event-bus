@@ -10,16 +10,14 @@ import (
 )
 
 var (
-	TopicRequired   = errors.New("creating a new consumer requires a non-empty topic")
-	ChannelRequired = errors.New("creating a new consumer requires a non-empty channel")
+	// ErrTopicRequired is returned when topic is not passed as parameter in bus.ListenerConfig.
+	ErrTopicRequired = errors.New("creating a new consumer requires a non-empty topic")
+	// ErrChannelRequired is returned when channel is not passed as parameter in bus.ListenerConfig.
+	ErrChannelRequired = errors.New("creating a new consumer requires a non-empty channel")
 )
 
-type handlerFunc func(m *Message) (interface{}, error)
-
-type Listener interface {
-	On(lc ListenerConfig) error
-}
-
+// ListenerConfig carries the different variables to tune a newly started consumer,
+// it exposes the same configuration available from official nsq go client.
 type ListenerConfig struct {
 	Topic                   string
 	Channel                 string
@@ -45,8 +43,8 @@ type ListenerConfig struct {
 	UserAgent               string
 	HeartbeatInterval       time.Duration
 	SampleRate              int32
-	TlsV1                   bool
-	TlsConfig               *tls.Config
+	TLSV1                   bool
+	TLSConfig               *tls.Config
 	Deflate                 bool
 	DeflateLevel            int
 	Snappy                  bool
@@ -57,14 +55,19 @@ type ListenerConfig struct {
 	AuthSecret              string
 }
 
+type handlerFunc func(m *Message) (interface{}, error)
+
+// On listen to a message from a specific topic using nsq consumer, returns
+// an error if topic and channel not passed or if an error ocurred while creating
+// nsq consumer.
 func On(lc ListenerConfig) (err error) {
 	if len(lc.Topic) == 0 {
-		err = TopicRequired
+		err = ErrTopicRequired
 		return
 	}
 
 	if len(lc.Channel) == 0 {
-		err = ChannelRequired
+		err = ErrChannelRequired
 		return
 	}
 
@@ -191,12 +194,12 @@ func newListenerConfig(lc ListenerConfig) (config *nsq.Config) {
 		config.SampleRate = lc.SampleRate
 	}
 
-	if lc.TlsV1 {
-		config.TlsV1 = lc.TlsV1
+	if lc.TLSV1 {
+		config.TlsV1 = lc.TLSV1
 	}
 
-	if lc.TlsConfig != nil {
-		config.TlsConfig = lc.TlsConfig
+	if lc.TLSConfig != nil {
+		config.TlsConfig = lc.TLSConfig
 	}
 
 	if lc.Deflate {
