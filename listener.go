@@ -84,10 +84,7 @@ func On(lc ListenerConfig) (err error) {
 
 	handler := handleMessage(lc)
 	consumer.AddConcurrentHandlers(handler, lc.HandlerConcurrency)
-
-	if err = consumer.ConnectToNSQLookupds(lc.Lookup); err != nil {
-		return
-	}
+	err = consumer.ConnectToNSQLookupds(lc.Lookup)
 
 	return
 }
