@@ -82,7 +82,7 @@ if err = bus.Request(topic, &e, handler); err != nil {
 
 func handler(message *Message) (reply interface{}, err error) {
   e := event{}
-  if err = message.Decode(&e); err != nil {
+  if err = message.DecodePayload(&e); err != nil {
     message.Finish()
     return
   }
