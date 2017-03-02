@@ -4,7 +4,7 @@
 
 ## Installation
 ```bash
-go get -u https://github.com/rafaeljesus/nsq-event-bus
+go get -u github.com/rafaeljesus/nsq-event-bus
 ```
 
 ## Usage
