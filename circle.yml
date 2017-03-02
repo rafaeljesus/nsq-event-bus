@@ -17,6 +17,7 @@ dependencies:
     - sudo add-apt-repository ppa:masterminds/glide -y
     - sudo apt-get update
     - sudo apt-get install glide -y
+    - go get -x -u github.com/golang/lint/golint
     - mkdir -p "$IMPORT_PATH"
   cache_directories:
     - nsq-0.3.8.linux-amd64.go1.6.2
@@ -26,4 +27,4 @@ dependencies:
 
 test:
   override:
-    - cd "$APP_PATH" && go vet && go test -v -race -cover $(glide nv)
+    - cd "$APP_PATH" && golint && go vet && go test -v -race -cover $(glide nv)

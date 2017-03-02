@@ -23,7 +23,7 @@ func TestNewEmitter(t *testing.T) {
 			t.Errorf("Expected to initialize emitter %s", err)
 		}
 
-		e := emitter.(*EventEmitter)
+		e := emitter.(*eventEmitter)
 		if e.String() != a.expect {
 			t.Errorf("Expected emitter address %s, got %s", a.expect, e.String())
 		}

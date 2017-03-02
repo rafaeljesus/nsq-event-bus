@@ -15,6 +15,7 @@ import (
 	"time"
 )
 
+// Emitter exposes a interface for emitting and listening for events.
 type Emitter interface {
 	Emit(topic string, payload interface{}) error
 	EmitAsync(topic string, payload interface{}) error
@@ -22,6 +23,8 @@ type Emitter interface {
 	Stop()
 }
 
+// EmitterConfig carries the different variables to tune a newly started emitter,
+// it exposes the same configuration available from official nsq go client.
 type EmitterConfig struct {
 	Address                 string
 	DialTimeout             time.Duration
@@ -43,8 +46,8 @@ type EmitterConfig struct {
 	UserAgent               string
 	HeartbeatInterval       time.Duration
 	SampleRate              int32
-	TlsV1                   bool
-	TlsConfig               *tls.Config
+	TLSV1                   bool
+	TLSConfig               *tls.Config
 	Deflate                 bool
 	DeflateLevel            int
 	Snappy                  bool
@@ -55,11 +58,14 @@ type EmitterConfig struct {
 	AuthSecret              string
 }
 
-type EventEmitter struct {
+type eventEmitter struct {
 	*nsq.Producer
 	address string
 }
 
+// NewEmitter returns a new eventEmitter configured with the
+// variables from the config parameter, or returning an non-nil err
+// if an error ocurred while creating nsq producer.
 func NewEmitter(ec EmitterConfig) (emitter Emitter, err error) {
 	config := newEmitterConfig(ec)
 
@@ -73,12 +79,15 @@ func NewEmitter(ec EmitterConfig) (emitter Emitter, err error) {
 		return
 	}
 
-	emitter = &EventEmitter{producer, address}
+	emitter = &eventEmitter{producer, address}
 
 	return
 }
 
-func (ee EventEmitter) Emit(topic string, payload interface{}) (err error) {
+// Emit emits a message to a specific topic using nsq producer, returning
+// an error if encoding payload fails or if an error ocurred while publishing
+// the message.
+func (ee eventEmitter) Emit(topic string, payload interface{}) (err error) {
 	body, err := ee.encodeMessage(payload, "")
 	if err != nil {
 		return
@@ -89,7 +98,10 @@ func (ee EventEmitter) Emit(topic string, payload interface{}) (err error) {
 	return
 }
 
-func (ee EventEmitter) EmitAsync(topic string, payload interface{}) (err error) {
+// Emit emits a message to a specific topic using nsq producer, but does not wait for
+// the response from `nsqd`. Returns an error if encoding payload fails and
+// logs to console if an error ocurred while publishing the message.
+func (ee eventEmitter) EmitAsync(topic string, payload interface{}) (err error) {
 	body, err := ee.encodeMessage(payload, "")
 	if err != nil {
 		return
@@ -115,7 +127,10 @@ func (ee EventEmitter) EmitAsync(topic string, payload interface{}) (err error) 
 	return
 }
 
-func (ee EventEmitter) Request(topic string, payload interface{}, handler handlerFunc) (err error) {
+// Request a RPC like method which implements request/reply pattern using nsq producer and consumer.
+// Returns an non-nil err if an error ocurred while creating or listening to the internal
+// reply topic or encoding the message payload fails or while publishing the message.
+func (ee eventEmitter) Request(topic string, payload interface{}, handler handlerFunc) (err error) {
 	replyTo, err := ee.genReplyQueue()
 	if err != nil {
 		return
@@ -143,11 +158,13 @@ func (ee EventEmitter) Request(topic string, payload interface{}, handler handle
 	return
 }
 
-func (ee EventEmitter) Stop() {
+// Stop initiates a graceful stop of the Producer (permanent)
+// NOTE: this blocks until completion
+func (ee eventEmitter) Stop() {
 	ee.Stop()
 }
 
-func (ee EventEmitter) encodeMessage(payload interface{}, replyTo string) (body []byte, err error) {
+func (ee eventEmitter) encodeMessage(payload interface{}, replyTo string) (body []byte, err error) {
 	p, err := json.Marshal(payload)
 	if err != nil {
 		return
@@ -159,7 +176,7 @@ func (ee EventEmitter) encodeMessage(payload interface{}, replyTo string) (body 
 	return
 }
 
-func (ee EventEmitter) genReplyQueue() (replyTo string, err error) {
+func (ee eventEmitter) genReplyQueue() (replyTo string, err error) {
 	b := make([]byte, 8)
 	_, err = rand.Read(b)
 	if err != nil {
@@ -172,7 +189,7 @@ func (ee EventEmitter) genReplyQueue() (replyTo string, err error) {
 	return
 }
 
-func (ee EventEmitter) createTopic(topic string) (err error) {
+func (ee eventEmitter) createTopic(topic string) (err error) {
 	s := strings.Split(ee.address, ":")
 	port, err := strconv.Atoi(s[1])
 	if err != nil {
@@ -260,12 +277,12 @@ func newEmitterConfig(ec EmitterConfig) (config *nsq.Config) {
 		config.SampleRate = ec.SampleRate
 	}
 
-	if ec.TlsV1 {
-		config.TlsV1 = ec.TlsV1
+	if ec.TLSV1 {
+		config.TlsV1 = ec.TLSV1
 	}
 
-	if ec.TlsConfig != nil {
-		config.TlsConfig = ec.TlsConfig
+	if ec.TLSConfig != nil {
+		config.TlsConfig = ec.TLSConfig
 	}
 
 	if ec.Deflate {
