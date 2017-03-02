@@ -104,6 +104,7 @@ func handler(message *Message) (reply interface{}, err error) {
 
 [![Build Status](https://circleci.com/gh/rafaeljesus/nsq-event-bus.svg?style=svg)](https://circleci.com/gh/rafaeljesus/nsq-event-bus)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rafaeljesus/nsq-event-bus)](https://goreportcard.com/report/github.com/rafaeljesus/nsq-event-bus)
+[![Go Doc](https://godoc.org/github.com/rafaeljesus/nsq-event-bus?status.svg)](https://godoc.org/github.com/rafaeljesus/nsq-event-bus)
 
 ---
 
