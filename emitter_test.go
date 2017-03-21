@@ -38,9 +38,12 @@ func TestEmitterEmit(t *testing.T) {
 
 	type event struct{ Name string }
 	e := event{"event"}
-
 	if err := emitter.Emit("etopic", &e); err != nil {
 		t.Errorf("Expected to emit message %s", err)
+	}
+
+	if err := emitter.Emit("", &e); err == nil {
+		t.Fail()
 	}
 }
 
@@ -55,6 +58,10 @@ func TestEmitterEmitAsync(t *testing.T) {
 
 	if err := emitter.EmitAsync("etopic", &e); err != nil {
 		t.Errorf("Expected to emit message %s", err)
+	}
+
+	if err := emitter.EmitAsync("", &e); err == nil {
+		t.Fail()
 	}
 }
 
@@ -105,6 +112,14 @@ func TestEmitterRequest(t *testing.T) {
 	e := event{"event"}
 	if err := emitter.Request("etopic", &e, replyHandler); err != nil {
 		t.Errorf("Expected to request a message %s", err)
+	}
+
+	if err := emitter.Request("", &e, replyHandler); err == nil {
+		t.Fail()
+	}
+
+	if err := emitter.Request("etopic", &e, nil); err == nil {
+		t.Fail()
 	}
 
 	wg.Wait()

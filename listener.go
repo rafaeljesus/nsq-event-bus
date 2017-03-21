@@ -10,8 +10,10 @@ import (
 )
 
 var (
-	// ErrTopicRequired is returned when topic is not passed as parameter in bus.ListenerConfig.
-	ErrTopicRequired = errors.New("creating a new consumer requires a non-empty topic")
+	// ErrTopicRequired is returned when topic is not passed as parameter.
+	ErrTopicRequired = errors.New("topic is mandatory")
+	// ErrHandlerRequired is returned when handler is not passed as parameter.
+	ErrHandlerRequired = errors.New("handler is mandatory")
 	// ErrChannelRequired is returned when channel is not passed as parameter in bus.ListenerConfig.
 	ErrChannelRequired = errors.New("creating a new consumer requires a non-empty channel")
 )
@@ -68,6 +70,11 @@ func On(lc ListenerConfig) (err error) {
 
 	if len(lc.Channel) == 0 {
 		err = ErrChannelRequired
+		return
+	}
+
+	if lc.HandlerFunc == nil {
+		err = ErrHandlerRequired
 		return
 	}
 
