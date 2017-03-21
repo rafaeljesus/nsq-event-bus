@@ -20,7 +20,6 @@ type Emitter interface {
 	Emit(topic string, payload interface{}) error
 	EmitAsync(topic string, payload interface{}) error
 	Request(topic string, payload interface{}, handler handlerFunc) error
-	Stop()
 }
 
 // EmitterConfig carries the different variables to tune a newly started emitter,
@@ -88,6 +87,11 @@ func NewEmitter(ec EmitterConfig) (emitter Emitter, err error) {
 // an error if encoding payload fails or if an error ocurred while publishing
 // the message.
 func (ee eventEmitter) Emit(topic string, payload interface{}) (err error) {
+	if len(topic) == 0 {
+		err = ErrTopicRequired
+		return
+	}
+
 	body, err := ee.encodeMessage(payload, "")
 	if err != nil {
 		return
@@ -102,6 +106,11 @@ func (ee eventEmitter) Emit(topic string, payload interface{}) (err error) {
 // the response from `nsqd`. Returns an error if encoding payload fails and
 // logs to console if an error ocurred while publishing the message.
 func (ee eventEmitter) EmitAsync(topic string, payload interface{}) (err error) {
+	if len(topic) == 0 {
+		err = ErrTopicRequired
+		return
+	}
+
 	body, err := ee.encodeMessage(payload, "")
 	if err != nil {
 		return
@@ -131,6 +140,16 @@ func (ee eventEmitter) EmitAsync(topic string, payload interface{}) (err error) 
 // Returns an non-nil err if an error ocurred while creating or listening to the internal
 // reply topic or encoding the message payload fails or while publishing the message.
 func (ee eventEmitter) Request(topic string, payload interface{}, handler handlerFunc) (err error) {
+	if len(topic) == 0 {
+		err = ErrTopicRequired
+		return
+	}
+
+  if handler == nil {
+		err = ErrHandlerRequired
+		return
+  }
+
 	replyTo, err := ee.genReplyQueue()
 	if err != nil {
 		return
@@ -156,12 +175,6 @@ func (ee eventEmitter) Request(topic string, payload interface{}, handler handle
 	err = ee.Publish(topic, body)
 
 	return
-}
-
-// Stop initiates a graceful stop of the Producer (permanent)
-// NOTE: this blocks until completion
-func (ee eventEmitter) Stop() {
-	ee.Stop()
 }
 
 func (ee eventEmitter) encodeMessage(payload interface{}, replyTo string) (body []byte, err error) {
