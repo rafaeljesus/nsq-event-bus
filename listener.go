@@ -73,10 +73,10 @@ func On(lc ListenerConfig) (err error) {
 		return
 	}
 
-  if lc.HandlerFunc == nil {
+	if lc.HandlerFunc == nil {
 		err = ErrHandlerRequired
 		return
-  }
+	}
 
 	if len(lc.Lookup) == 0 {
 		lc.Lookup = []string{"localhost:4161"}

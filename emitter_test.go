@@ -43,7 +43,7 @@ func TestEmitterEmit(t *testing.T) {
 	}
 
 	if err := emitter.Emit("", &e); err == nil {
-    t.Fail()
+		t.Fail()
 	}
 }
 
@@ -61,7 +61,7 @@ func TestEmitterEmitAsync(t *testing.T) {
 	}
 
 	if err := emitter.EmitAsync("", &e); err == nil {
-    t.Fail()
+		t.Fail()
 	}
 }
 
@@ -115,11 +115,11 @@ func TestEmitterRequest(t *testing.T) {
 	}
 
 	if err := emitter.Request("", &e, replyHandler); err == nil {
-    t.Fail()
+		t.Fail()
 	}
 
 	if err := emitter.Request("etopic", &e, nil); err == nil {
-    t.Fail()
+		t.Fail()
 	}
 
 	wg.Wait()

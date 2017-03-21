@@ -49,11 +49,11 @@ func TestListenerOn(t *testing.T) {
 
 func TestListenerOnRequiresTopic(t *testing.T) {
 	if err := On(ListenerConfig{
-		Topic:       "",
-		Channel:     "test_on",
+		Topic:   "",
+		Channel: "test_on",
 		HandlerFunc: func(message *Message) (reply interface{}, err error) {
-      return
-    },
+			return
+		},
 	}); err == nil {
 		t.Errorf("Expected to pass a topic %s", err)
 	}
@@ -61,11 +61,11 @@ func TestListenerOnRequiresTopic(t *testing.T) {
 
 func TestListenerOnRequiresChannel(t *testing.T) {
 	if err := On(ListenerConfig{
-		Topic:       "ltopic",
-		Channel:     "",
+		Topic:   "ltopic",
+		Channel: "",
 		HandlerFunc: func(message *Message) (reply interface{}, err error) {
-      return
-    },
+			return
+		},
 	}); err == nil {
 		t.Errorf("Expected to pass a channel %s", err)
 	}
@@ -73,8 +73,8 @@ func TestListenerOnRequiresChannel(t *testing.T) {
 
 func TestListenerOnRequiresHandler(t *testing.T) {
 	if err := On(ListenerConfig{
-		Topic:       "ltopic",
-		Channel:     "test_on",
+		Topic:   "ltopic",
+		Channel: "test_on",
 	}); err == nil {
 		t.Errorf("Expected to pass a handler %s", err)
 	}

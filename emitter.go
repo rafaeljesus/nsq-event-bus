@@ -145,10 +145,10 @@ func (ee eventEmitter) Request(topic string, payload interface{}, handler handle
 		return
 	}
 
-  if handler == nil {
+	if handler == nil {
 		err = ErrHandlerRequired
 		return
-  }
+	}
 
 	replyTo, err := ee.genReplyQueue()
 	if err != nil {
