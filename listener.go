@@ -60,7 +60,7 @@ type ListenerConfig struct {
 type handlerFunc func(m *Message) (interface{}, error)
 
 // On listen to a message from a specific topic using nsq consumer, returns
-// an error if topic and channel not passed or if an error ocurred while creating
+// an error if topic and channel not passed or if an error occurred while creating
 // nsq consumer.
 func On(lc ListenerConfig) (err error) {
 	if len(lc.Topic) == 0 {

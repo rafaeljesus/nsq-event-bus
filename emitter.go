@@ -64,7 +64,7 @@ type eventEmitter struct {
 
 // NewEmitter returns a new eventEmitter configured with the
 // variables from the config parameter, or returning an non-nil err
-// if an error ocurred while creating nsq producer.
+// if an error occurred while creating nsq producer.
 func NewEmitter(ec EmitterConfig) (emitter Emitter, err error) {
 	config := newEmitterConfig(ec)
 
@@ -84,7 +84,7 @@ func NewEmitter(ec EmitterConfig) (emitter Emitter, err error) {
 }
 
 // Emit emits a message to a specific topic using nsq producer, returning
-// an error if encoding payload fails or if an error ocurred while publishing
+// an error if encoding payload fails or if an error occurred while publishing
 // the message.
 func (ee eventEmitter) Emit(topic string, payload interface{}) (err error) {
 	if len(topic) == 0 {
@@ -104,7 +104,7 @@ func (ee eventEmitter) Emit(topic string, payload interface{}) (err error) {
 
 // Emit emits a message to a specific topic using nsq producer, but does not wait for
 // the response from `nsqd`. Returns an error if encoding payload fails and
-// logs to console if an error ocurred while publishing the message.
+// logs to console if an error occurred while publishing the message.
 func (ee eventEmitter) EmitAsync(topic string, payload interface{}) (err error) {
 	if len(topic) == 0 {
 		err = ErrTopicRequired
@@ -137,7 +137,7 @@ func (ee eventEmitter) EmitAsync(topic string, payload interface{}) (err error) 
 }
 
 // Request a RPC like method which implements request/reply pattern using nsq producer and consumer.
-// Returns an non-nil err if an error ocurred while creating or listening to the internal
+// Returns an non-nil err if an error occurred while creating or listening to the internal
 // reply topic or encoding the message payload fails or while publishing the message.
 func (ee eventEmitter) Request(topic string, payload interface{}, handler handlerFunc) (err error) {
 	if len(topic) == 0 {
