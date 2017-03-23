@@ -2,6 +2,7 @@ package bus
 
 import (
 	"encoding/json"
+
 	nsq "github.com/nsqio/go-nsq"
 )
 

@@ -2,17 +2,15 @@ package bus
 
 import (
 	"crypto/rand"
-	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	nsq "github.com/nsqio/go-nsq"
 	"log"
-	"net"
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
+
+	nsq "github.com/nsqio/go-nsq"
 )
 
 // Emitter exposes a interface for emitting and listening for events.
@@ -20,41 +18,6 @@ type Emitter interface {
 	Emit(topic string, payload interface{}) error
 	EmitAsync(topic string, payload interface{}) error
 	Request(topic string, payload interface{}, handler handlerFunc) error
-}
-
-// EmitterConfig carries the different variables to tune a newly started emitter,
-// it exposes the same configuration available from official nsq go client.
-type EmitterConfig struct {
-	Address                 string
-	DialTimeout             time.Duration
-	ReadTimeout             time.Duration
-	WriteTimeout            time.Duration
-	LocalAddr               net.Addr
-	LookupdPollInterval     time.Duration
-	LookupdPollJitter       float64
-	MaxRequeueDelay         time.Duration
-	DefaultRequeueDelay     time.Duration
-	BackoffStrategy         nsq.BackoffStrategy
-	MaxBackoffDuration      time.Duration
-	BackoffMultiplier       time.Duration
-	MaxAttempts             uint16
-	LowRdyIdleTimeout       time.Duration
-	RDYRedistributeInterval time.Duration
-	ClientID                string
-	Hostname                string
-	UserAgent               string
-	HeartbeatInterval       time.Duration
-	SampleRate              int32
-	TLSV1                   bool
-	TLSConfig               *tls.Config
-	Deflate                 bool
-	DeflateLevel            int
-	Snappy                  bool
-	OutputBufferSize        int64
-	OutputBufferTimeout     time.Duration
-	MaxInFlight             int
-	MsgTimeout              time.Duration
-	AuthSecret              string
 }
 
 type eventEmitter struct {
@@ -211,39 +174,6 @@ func (ee eventEmitter) createTopic(topic string) (err error) {
 
 	uri := "http://" + s[0] + ":" + strconv.Itoa(port+1) + "/topic/create?topic=" + topic
 	_, err = http.Post(uri, "application/json; charset=utf-8", nil)
-
-	return
-}
-
-func newEmitterConfig(ec EmitterConfig) (config *nsq.Config) {
-	config = nsq.NewConfig()
-
-	setDialTimeout(config, ec.DialTimeout)
-	setReadTimeout(config, ec.ReadTimeout)
-	setLocalAddr(config, ec.LocalAddr)
-	setLookupPollInterval(config, ec.LookupdPollInterval)
-	setLookupPollJitter(config, ec.LookupdPollJitter)
-	setMaxRequeueDelay(config, ec.MaxRequeueDelay)
-	setDefaultRequeueDelay(config, ec.DefaultRequeueDelay)
-	setBackoffStrategy(config, ec.BackoffStrategy)
-	setMaxBackoffDuration(config, ec.MaxBackoffDuration)
-	setBackoffMultiplier(config, ec.BackoffMultiplier)
-	setMaxAttempts(config, ec.MaxAttempts)
-	setLowRdyIdleTimeout(config, ec.LowRdyIdleTimeout)
-	setRDYRedistributeInterval(config, ec.RDYRedistributeInterval)
-	setClientID(config, ec.ClientID)
-	setHostname(config, ec.Hostname)
-	setUserAgent(config, ec.UserAgent)
-	setHeartbeatInterval(config, ec.HeartbeatInterval)
-	setSampleRate(config, ec.SampleRate)
-	setTLSV1(config, ec.TLSV1)
-	setTLSConfig(config, ec.TLSConfig)
-	setDeflate(config, ec.Deflate)
-	setOutputBufferSize(config, ec.OutputBufferSize)
-	setOutputBufferTimeout(config, ec.OutputBufferTimeout)
-	setMaxInFlight(config, ec.MaxInFlight)
-	setMsgTimeout(config, ec.MsgTimeout)
-	setAuthSecret(config, ec.AuthSecret)
 
 	return
 }
