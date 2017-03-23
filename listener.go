@@ -129,109 +129,188 @@ func handleMessage(lc ListenerConfig) nsq.HandlerFunc {
 func newListenerConfig(lc ListenerConfig) (config *nsq.Config) {
 	config = nsq.NewConfig()
 
-	if lc.DialTimeout != 0 {
-		config.DialTimeout = lc.DialTimeout
-	}
-
-	if lc.ReadTimeout != 0 {
-		config.ReadTimeout = lc.ReadTimeout
-	}
-
-	if lc.LocalAddr != nil {
-		config.LocalAddr = lc.LocalAddr
-	}
-
-	if lc.LookupdPollInterval != 0 {
-		config.LookupdPollInterval = lc.LookupdPollInterval
-	}
-
-	if lc.LookupdPollJitter != 0 {
-		config.LookupdPollJitter = lc.LookupdPollJitter
-	}
-
-	if lc.MaxRequeueDelay != 0 {
-		config.MaxRequeueDelay = lc.MaxRequeueDelay
-	}
-
-	if lc.DefaultRequeueDelay != 0 {
-		config.DefaultRequeueDelay = lc.DefaultRequeueDelay
-	}
-
-	if lc.BackoffStrategy != nil {
-		config.BackoffStrategy = lc.BackoffStrategy
-	}
-
-	if lc.MaxBackoffDuration != 0 {
-		config.MaxBackoffDuration = lc.MaxBackoffDuration
-	}
-
-	if lc.BackoffMultiplier != 0 {
-		config.BackoffMultiplier = lc.BackoffMultiplier
-	}
-
-	if lc.MaxAttempts != 0 {
-		config.MaxAttempts = lc.MaxAttempts
-	}
-
-	if lc.LowRdyIdleTimeout != 0 {
-		config.LowRdyIdleTimeout = lc.LowRdyIdleTimeout
-	}
-
-	if lc.RDYRedistributeInterval != 0 {
-		config.RDYRedistributeInterval = lc.RDYRedistributeInterval
-	}
-
-	if lc.ClientID != "" {
-		config.ClientID = lc.ClientID
-	}
-
-	if lc.Hostname != "" {
-		config.Hostname = lc.Hostname
-	}
-
-	if lc.UserAgent != "" {
-		config.UserAgent = lc.UserAgent
-	}
-
-	if lc.HeartbeatInterval != 0 {
-		config.HeartbeatInterval = lc.HeartbeatInterval
-	}
-
-	if lc.SampleRate != 0 {
-		config.SampleRate = lc.SampleRate
-	}
-
-	if lc.TLSV1 {
-		config.TlsV1 = lc.TLSV1
-	}
-
-	if lc.TLSConfig != nil {
-		config.TlsConfig = lc.TLSConfig
-	}
-
-	if lc.Deflate {
-		config.Deflate = lc.Deflate
-	}
-
-	if lc.OutputBufferSize != 0 {
-		config.OutputBufferSize = lc.OutputBufferSize
-	}
-
-	if lc.OutputBufferTimeout != 0 {
-		config.OutputBufferTimeout = lc.OutputBufferTimeout
-	}
-
-	if lc.MaxInFlight != 0 {
-		config.MaxInFlight = lc.MaxInFlight
-	}
-
-	if lc.MsgTimeout != 0 {
-		config.MsgTimeout = lc.MsgTimeout
-	}
-
-	if lc.AuthSecret != "" {
-		config.AuthSecret = lc.AuthSecret
-	}
+	setDialTimeout(config, lc.DialTimeout)
+	setReadTimeout(config, lc.ReadTimeout)
+	setLocalAddr(config, lc.LocalAddr)
+	setLookupPollInterval(config, lc.LookupdPollInterval)
+	setLookupPollJitter(config, lc.LookupdPollJitter)
+	setMaxRequeueDelay(config, lc.MaxRequeueDelay)
+	setDefaultRequeueDelay(config, lc.DefaultRequeueDelay)
+	setBackoffStrategy(config, lc.BackoffStrategy)
+	setMaxBackoffDuration(config, lc.MaxBackoffDuration)
+	setBackoffMultiplier(config, lc.BackoffMultiplier)
+	setMaxAttempts(config, lc.MaxAttempts)
+	setLowRdyIdleTimeout(config, lc.LowRdyIdleTimeout)
+	setRDYRedistributeInterval(config, lc.RDYRedistributeInterval)
+	setClientID(config, lc.ClientID)
+	setHostname(config, lc.Hostname)
+	setUserAgent(config, lc.UserAgent)
+	setHeartbeatInterval(config, lc.HeartbeatInterval)
+	setSampleRate(config, lc.SampleRate)
+	setTLSV1(config, lc.TLSV1)
+	setTLSConfig(config, lc.TLSConfig)
+	setDeflate(config, lc.Deflate)
+	setOutputBufferSize(config, lc.OutputBufferSize)
+	setOutputBufferTimeout(config, lc.OutputBufferTimeout)
+	setMaxInFlight(config, lc.MaxInFlight)
+	setMsgTimeout(config, lc.MsgTimeout)
+	setAuthSecret(config, lc.AuthSecret)
 
 	return
+}
+
+func setDialTimeout(config *nsq.Config, dialTimeout time.Duration) {
+	if dialTimeout != 0 {
+		config.DialTimeout = dialTimeout
+	}
+}
+
+func setReadTimeout(config *nsq.Config, readTimeout time.Duration) {
+	if readTimeout != 0 {
+		config.ReadTimeout = readTimeout
+	}
+}
+
+func setLocalAddr(config *nsq.Config, localAddr net.Addr) {
+	if localAddr != nil {
+		config.LocalAddr = localAddr
+	}
+}
+
+func setLookupPollInterval(config *nsq.Config, lookupdPollInterval time.Duration) {
+	if lookupdPollInterval != 0 {
+		config.LookupdPollInterval = lookupdPollInterval
+	}
+}
+
+func setLookupPollJitter(config *nsq.Config, lookupdPollJitter float64) {
+	if lookupdPollJitter != 0 {
+		config.LookupdPollJitter = lookupdPollJitter
+	}
+}
+
+func setMaxRequeueDelay(config *nsq.Config, maxRequeueDelay time.Duration) {
+	if maxRequeueDelay != 0 {
+		config.MaxRequeueDelay = maxRequeueDelay
+	}
+}
+
+func setDefaultRequeueDelay(config *nsq.Config, defaultRequeueDelay time.Duration) {
+	if defaultRequeueDelay != 0 {
+		config.DefaultRequeueDelay = defaultRequeueDelay
+	}
+}
+
+func setBackoffStrategy(config *nsq.Config, backoffStrategy nsq.BackoffStrategy) {
+	if backoffStrategy != nil {
+		config.BackoffStrategy = backoffStrategy
+	}
+}
+
+func setMaxBackoffDuration(config *nsq.Config, maxBackoffDuration time.Duration) {
+	if maxBackoffDuration != 0 {
+		config.MaxBackoffDuration = maxBackoffDuration
+	}
+}
+
+func setBackoffMultiplier(config *nsq.Config, backoffMultiplier time.Duration) {
+	if backoffMultiplier != 0 {
+		config.BackoffMultiplier = backoffMultiplier
+	}
+}
+
+func setMaxAttempts(config *nsq.Config, maxAttempts uint16) {
+	if maxAttempts != 0 {
+		config.MaxAttempts = maxAttempts
+	}
+}
+
+func setLowRdyIdleTimeout(config *nsq.Config, lowRdyIdleTimeout time.Duration) {
+	if lowRdyIdleTimeout != 0 {
+		config.LowRdyIdleTimeout = lowRdyIdleTimeout
+	}
+}
+
+func setRDYRedistributeInterval(config *nsq.Config, rdyRedistributeInterval time.Duration) {
+	if rdyRedistributeInterval != 0 {
+		config.LowRdyIdleTimeout = rdyRedistributeInterval
+	}
+}
+
+func setClientID(config *nsq.Config, clientID string) {
+	if clientID != "" {
+		config.ClientID = clientID
+	}
+}
+
+func setHostname(config *nsq.Config, hostname string) {
+	if hostname != "" {
+		config.Hostname = hostname
+	}
+}
+
+func setUserAgent(config *nsq.Config, userAgent string) {
+	if userAgent != "" {
+		config.UserAgent = userAgent
+	}
+}
+
+func setHeartbeatInterval(config *nsq.Config, heartbeatInterval time.Duration) {
+	if heartbeatInterval != 0 {
+		config.HeartbeatInterval = heartbeatInterval
+	}
+}
+
+func setSampleRate(config *nsq.Config, sampleRate int32) {
+	if sampleRate != 0 {
+		config.SampleRate = sampleRate
+	}
+}
+
+func setTLSV1(config *nsq.Config, tlsv1 bool) {
+	if tlsv1 {
+		config.TlsV1 = tlsv1
+	}
+}
+
+func setTLSConfig(config *nsq.Config, tlsConfig *tls.Config) {
+	if tlsConfig != nil {
+		config.TlsConfig = tlsConfig
+	}
+}
+
+func setDeflate(config *nsq.Config, deflate bool) {
+	if deflate {
+		config.Deflate = deflate
+	}
+}
+
+func setOutputBufferSize(config *nsq.Config, out int64) {
+	if out != 0 {
+		config.OutputBufferSize = out
+	}
+}
+
+func setOutputBufferTimeout(config *nsq.Config, out time.Duration) {
+	if out != 0 {
+		config.OutputBufferTimeout = out
+	}
+}
+
+func setMaxInFlight(config *nsq.Config, maxInFlight int) {
+	if maxInFlight != 0 {
+		config.MaxInFlight = maxInFlight
+	}
+}
+
+func setMsgTimeout(config *nsq.Config, msgTimeout time.Duration) {
+	if msgTimeout != 0 {
+		config.MsgTimeout = msgTimeout
+	}
+}
+
+func setAuthSecret(config *nsq.Config, authSecret string) {
+	if authSecret != "" {
+		config.AuthSecret = authSecret
+	}
 }

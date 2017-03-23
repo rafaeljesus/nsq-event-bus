@@ -1,32 +1,50 @@
 package bus
 
 import (
+	"crypto/tls"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestNewEmitter(t *testing.T) {
-	var addressesTest = []struct {
-		addr   string
-		expect string
-	}{
-		{"", "localhost:4150"},
-		{"new-address", "new-address"},
-	}
+	_, err := NewEmitter(EmitterConfig{
+		Address:                 "localhost:4150",
+		DialTimeout:             time.Second * 5,
+		ReadTimeout:             time.Second * 5,
+		WriteTimeout:            time.Second * 5,
+		LocalAddr:               &localAddrMock{},
+		LookupdPollInterval:     time.Second * 5,
+		LookupdPollJitter:       1,
+		MaxRequeueDelay:         time.Second * 5,
+		DefaultRequeueDelay:     time.Second * 5,
+		BackoffStrategy:         &backoffStrategyMock{},
+		MaxBackoffDuration:      time.Second * 5,
+		BackoffMultiplier:       time.Second * 5,
+		MaxAttempts:             5,
+		LowRdyIdleTimeout:       time.Second * 5,
+		RDYRedistributeInterval: time.Second * 5,
+		ClientID:                "foo",
+		Hostname:                "foo",
+		UserAgent:               "foo",
+		HeartbeatInterval:       time.Second * 5,
+		SampleRate:              10,
+		TLSV1:                   true,
+		TLSConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+		Deflate:             true,
+		DeflateLevel:        1,
+		Snappy:              true,
+		OutputBufferSize:    1,
+		OutputBufferTimeout: time.Second * 5,
+		MaxInFlight:         1,
+		MsgTimeout:          time.Second * 5,
+		AuthSecret:          "foo",
+	})
 
-	for _, a := range addressesTest {
-		emitter, err := NewEmitter(EmitterConfig{
-			Address: a.addr,
-		})
-
-		if err != nil {
-			t.Errorf("Expected to initialize emitter %s", err)
-		}
-
-		e := emitter.(*eventEmitter)
-		if e.String() != a.expect {
-			t.Errorf("Expected emitter address %s, got %s", a.expect, e.String())
-		}
+	if err != nil {
+		t.Errorf("Expected to initialize emitter %s", err)
 	}
 }
 
@@ -123,4 +141,20 @@ func TestEmitterRequest(t *testing.T) {
 	}
 
 	wg.Wait()
+}
+
+type localAddrMock struct{}
+
+func (a *localAddrMock) Network() (s string) {
+	return
+}
+
+func (a *localAddrMock) String() (s string) {
+	return
+}
+
+type backoffStrategyMock struct{}
+
+func (b *backoffStrategyMock) Calculate(attempt int) (v time.Duration) {
+	return
 }

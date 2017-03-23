@@ -183,8 +183,8 @@ func (ee eventEmitter) encodeMessage(payload interface{}, replyTo string) (body 
 		return
 	}
 
-	message := Message{Payload: p, ReplyTo: replyTo}
-	body, err = json.Marshal(&message)
+	message := NewMessage(p, replyTo)
+	body, err = json.Marshal(message)
 
 	return
 }
@@ -218,109 +218,32 @@ func (ee eventEmitter) createTopic(topic string) (err error) {
 func newEmitterConfig(ec EmitterConfig) (config *nsq.Config) {
 	config = nsq.NewConfig()
 
-	if ec.DialTimeout != 0 {
-		config.DialTimeout = ec.DialTimeout
-	}
-
-	if ec.ReadTimeout != 0 {
-		config.ReadTimeout = ec.ReadTimeout
-	}
-
-	if ec.LocalAddr != nil {
-		config.LocalAddr = ec.LocalAddr
-	}
-
-	if ec.LookupdPollInterval != 0 {
-		config.LookupdPollInterval = ec.LookupdPollInterval
-	}
-
-	if ec.LookupdPollJitter != 0 {
-		config.LookupdPollJitter = ec.LookupdPollJitter
-	}
-
-	if ec.MaxRequeueDelay != 0 {
-		config.MaxRequeueDelay = ec.MaxRequeueDelay
-	}
-
-	if ec.DefaultRequeueDelay != 0 {
-		config.DefaultRequeueDelay = ec.DefaultRequeueDelay
-	}
-
-	if ec.BackoffStrategy != nil {
-		config.BackoffStrategy = ec.BackoffStrategy
-	}
-
-	if ec.MaxBackoffDuration != 0 {
-		config.MaxBackoffDuration = ec.MaxBackoffDuration
-	}
-
-	if ec.BackoffMultiplier != 0 {
-		config.BackoffMultiplier = ec.BackoffMultiplier
-	}
-
-	if ec.MaxAttempts != 0 {
-		config.MaxAttempts = ec.MaxAttempts
-	}
-
-	if ec.LowRdyIdleTimeout != 0 {
-		config.LowRdyIdleTimeout = ec.LowRdyIdleTimeout
-	}
-
-	if ec.RDYRedistributeInterval != 0 {
-		config.RDYRedistributeInterval = ec.RDYRedistributeInterval
-	}
-
-	if ec.ClientID != "" {
-		config.ClientID = ec.ClientID
-	}
-
-	if ec.Hostname != "" {
-		config.Hostname = ec.Hostname
-	}
-
-	if ec.UserAgent != "" {
-		config.UserAgent = ec.UserAgent
-	}
-
-	if ec.HeartbeatInterval != 0 {
-		config.HeartbeatInterval = ec.HeartbeatInterval
-	}
-
-	if ec.SampleRate != 0 {
-		config.SampleRate = ec.SampleRate
-	}
-
-	if ec.TLSV1 {
-		config.TlsV1 = ec.TLSV1
-	}
-
-	if ec.TLSConfig != nil {
-		config.TlsConfig = ec.TLSConfig
-	}
-
-	if ec.Deflate {
-		config.Deflate = ec.Deflate
-	}
-
-	if ec.OutputBufferSize != 0 {
-		config.OutputBufferSize = ec.OutputBufferSize
-	}
-
-	if ec.OutputBufferTimeout != 0 {
-		config.OutputBufferTimeout = ec.OutputBufferTimeout
-	}
-
-	if ec.MaxInFlight != 0 {
-		config.MaxInFlight = ec.MaxInFlight
-	}
-
-	if ec.MsgTimeout != 0 {
-		config.MsgTimeout = ec.MsgTimeout
-	}
-
-	if ec.AuthSecret != "" {
-		config.AuthSecret = ec.AuthSecret
-	}
+	setDialTimeout(config, ec.DialTimeout)
+	setReadTimeout(config, ec.ReadTimeout)
+	setLocalAddr(config, ec.LocalAddr)
+	setLookupPollInterval(config, ec.LookupdPollInterval)
+	setLookupPollJitter(config, ec.LookupdPollJitter)
+	setMaxRequeueDelay(config, ec.MaxRequeueDelay)
+	setDefaultRequeueDelay(config, ec.DefaultRequeueDelay)
+	setBackoffStrategy(config, ec.BackoffStrategy)
+	setMaxBackoffDuration(config, ec.MaxBackoffDuration)
+	setBackoffMultiplier(config, ec.BackoffMultiplier)
+	setMaxAttempts(config, ec.MaxAttempts)
+	setLowRdyIdleTimeout(config, ec.LowRdyIdleTimeout)
+	setRDYRedistributeInterval(config, ec.RDYRedistributeInterval)
+	setClientID(config, ec.ClientID)
+	setHostname(config, ec.Hostname)
+	setUserAgent(config, ec.UserAgent)
+	setHeartbeatInterval(config, ec.HeartbeatInterval)
+	setSampleRate(config, ec.SampleRate)
+	setTLSV1(config, ec.TLSV1)
+	setTLSConfig(config, ec.TLSConfig)
+	setDeflate(config, ec.Deflate)
+	setOutputBufferSize(config, ec.OutputBufferSize)
+	setOutputBufferTimeout(config, ec.OutputBufferTimeout)
+	setMaxInFlight(config, ec.MaxInFlight)
+	setMsgTimeout(config, ec.MsgTimeout)
+	setAuthSecret(config, ec.AuthSecret)
 
 	return
 }
