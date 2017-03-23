@@ -1,8 +1,10 @@
 package bus
 
 import (
+	"crypto/tls"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestListenerOn(t *testing.T) {
@@ -37,9 +39,41 @@ func TestListenerOn(t *testing.T) {
 	}
 
 	if err := On(ListenerConfig{
-		Topic:       "ltopic",
-		Channel:     "test_on",
-		HandlerFunc: handler,
+		Topic:                   "ltopic",
+		Channel:                 "test_on",
+		HandlerFunc:             handler,
+		HandlerConcurrency:      1,
+		Lookup:                  []string{"localhost:4161"},
+		DialTimeout:             time.Second * 100,
+		ReadTimeout:             time.Second * 100,
+		WriteTimeout:            time.Second * 100,
+		LookupdPollInterval:     time.Second * 2,
+		LookupdPollJitter:       1,
+		MaxRequeueDelay:         time.Second * 5,
+		DefaultRequeueDelay:     time.Second * 5,
+		BackoffStrategy:         &backoffStrategyMock{},
+		MaxBackoffDuration:      time.Second * 5,
+		BackoffMultiplier:       time.Second * 5,
+		MaxAttempts:             5,
+		LowRdyIdleTimeout:       time.Second * 5,
+		RDYRedistributeInterval: time.Second * 5,
+		ClientID:                "foo",
+		Hostname:                "foo",
+		UserAgent:               "foo",
+		HeartbeatInterval:       time.Second * 20,
+		SampleRate:              10,
+		TLSV1:                   true,
+		TLSConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+		Deflate:             true,
+		DeflateLevel:        5,
+		Snappy:              true,
+		OutputBufferSize:    16384,
+		OutputBufferTimeout: time.Millisecond * 350,
+		MaxInFlight:         2,
+		MsgTimeout:          time.Second * 5,
+		AuthSecret:          "foo",
 	}); err != nil {
 		t.Errorf("Expected to listen a message %s", err)
 	}
