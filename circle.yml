@@ -14,17 +14,14 @@ dependencies:
         background: true
     - ./nsqd --lookupd-tcp-address=127.0.0.1:4160 --broadcast-address=127.0.0.1:
         background: true
-    - sudo add-apt-repository ppa:masterminds/glide -y
-    - sudo apt-get update
-    - sudo apt-get install glide -y
     - go get -x -u github.com/golang/lint/golint
     - mkdir -p "$IMPORT_PATH"
   cache_directories:
     - nsq-0.3.8.linux-amd64.go1.6.2
   override:
     - ln -sf "$(pwd)" "$APP_PATH"
-    - cd "$APP_PATH" && glide install
+    - cd "$APP_PATH" && make deps
 
 test:
   override:
-    - cd "$APP_PATH" && golint && go vet && go test -v -race -cover $(glide nv)
+    - cd "$APP_PATH" && make test
