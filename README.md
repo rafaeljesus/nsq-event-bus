@@ -1,6 +1,7 @@
 ## Event Bus NSQ
 
 * A tiny wrapper around [go-nsq](https://github.com/nsqio/go-nsq) topic and channel.
+* Protect nsq calls with [gobreaker](https://github.com/sony/gobreaker).
 
 ## Installation
 ```bash
@@ -15,7 +16,7 @@ The nsq-event-bus package exposes a interface for emitting and listening events.
 import "github.com/rafaeljesus/nsq-event-bus"
 
 topic := "events"
-emitter, err := bus.NewEmitter(EmitterConfig{
+emitter, err := bus.NewEmitter(bus.EmitterConfig{
   Address: "localhost:4150",
   MaxInFlight: 25,
 })

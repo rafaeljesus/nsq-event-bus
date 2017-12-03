@@ -7,7 +7,39 @@ import (
 	"time"
 )
 
-func TestListenerOn(t *testing.T) {
+func TestListener(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		scenario string
+		function func(*testing.T)
+	}{
+		{
+			scenario: "listener on",
+			function: testOn,
+		},
+		{
+			scenario: "on requires topic",
+			function: testOnRequiresTopic,
+		},
+		{
+			scenario: "on requires channel",
+			function: testOnRequiresChannel,
+		},
+		{
+			scenario: "on requires handler",
+			function: testOnRequiresHandler,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.scenario, func(t *testing.T) {
+			test.function(t)
+		})
+	}
+}
+
+func testOn(t *testing.T) {
 	type event struct{ Name string }
 
 	emitter, err := NewEmitter(EmitterConfig{})
@@ -81,7 +113,7 @@ func TestListenerOn(t *testing.T) {
 	wg.Wait()
 }
 
-func TestListenerOnRequiresTopic(t *testing.T) {
+func testOnRequiresTopic(t *testing.T) {
 	if err := On(ListenerConfig{
 		Topic:   "",
 		Channel: "test_on",
@@ -93,7 +125,7 @@ func TestListenerOnRequiresTopic(t *testing.T) {
 	}
 }
 
-func TestListenerOnRequiresChannel(t *testing.T) {
+func testOnRequiresChannel(t *testing.T) {
 	if err := On(ListenerConfig{
 		Topic:   "ltopic",
 		Channel: "",
@@ -105,7 +137,7 @@ func TestListenerOnRequiresChannel(t *testing.T) {
 	}
 }
 
-func TestListenerOnRequiresHandler(t *testing.T) {
+func testOnRequiresHandler(t *testing.T) {
 	if err := On(ListenerConfig{
 		Topic:   "ltopic",
 		Channel: "test_on",

@@ -7,7 +7,39 @@ import (
 	"time"
 )
 
-func TestNewEmitter(t *testing.T) {
+func TestEmitter(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		scenario string
+		function func(*testing.T)
+	}{
+		{
+			scenario: "create new emitter",
+			function: testNewEmitter,
+		},
+		{
+			scenario: "emit message",
+			function: testEmitMessage,
+		},
+		{
+			scenario: "emit async message",
+			function: testEmitAsyncMessage,
+		},
+		{
+			scenario: "request message",
+			function: testRequestMessage,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.scenario, func(t *testing.T) {
+			test.function(t)
+		})
+	}
+}
+
+func testNewEmitter(t *testing.T) {
 	_, err := NewEmitter(EmitterConfig{
 		Address:                 "localhost:4150",
 		DialTimeout:             time.Second * 5,
@@ -48,7 +80,7 @@ func TestNewEmitter(t *testing.T) {
 	}
 }
 
-func TestEmitterEmit(t *testing.T) {
+func testEmitMessage(t *testing.T) {
 	emitter, err := NewEmitter(EmitterConfig{})
 	if err != nil {
 		t.Errorf("Expected to initialize emitter %s", err)
@@ -65,7 +97,7 @@ func TestEmitterEmit(t *testing.T) {
 	}
 }
 
-func TestEmitterEmitAsync(t *testing.T) {
+func testEmitAsyncMessage(t *testing.T) {
 	emitter, err := NewEmitter(EmitterConfig{})
 	if err != nil {
 		t.Errorf("Expected to initialize emitter %s", err)
@@ -83,7 +115,7 @@ func TestEmitterEmitAsync(t *testing.T) {
 	}
 }
 
-func TestEmitterRequest(t *testing.T) {
+func testRequestMessage(t *testing.T) {
 	emitter, err := NewEmitter(EmitterConfig{})
 	if err != nil {
 		t.Errorf("Expected to initialize emitter %s", err)

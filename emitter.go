@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	nsq "github.com/nsqio/go-nsq"
+	"github.com/sony/gobreaker"
 )
 
 // Emitter exposes a interface for emitting and listening for events.
@@ -20,15 +21,16 @@ type Emitter interface {
 	Request(topic string, payload interface{}, handler handlerFunc) error
 }
 
-type eventEmitter struct {
-	*nsq.Producer
-	address string
+type EventEmitter struct {
+	producer *nsq.Producer
+	address  string
+	breaker  *gobreaker.CircuitBreaker
 }
 
-// NewEmitter returns a new eventEmitter configured with the
+// NewEmitter returns a new EventEmitter configured with the
 // variables from the config parameter, or returning an non-nil err
 // if an error occurred while creating nsq producer.
-func NewEmitter(ec EmitterConfig) (emitter Emitter, err error) {
+func NewEmitter(ec EmitterConfig) (emitter *EventEmitter, err error) {
 	config := newEmitterConfig(ec)
 
 	address := ec.Address
@@ -41,7 +43,11 @@ func NewEmitter(ec EmitterConfig) (emitter Emitter, err error) {
 		return
 	}
 
-	emitter = &eventEmitter{producer, address}
+	emitter = &EventEmitter{
+		producer: producer,
+		address:  address,
+		breaker:  gobreaker.NewCircuitBreaker(newBreakerSettings(ec.Breaker)),
+	}
 
 	return
 }
@@ -49,7 +55,7 @@ func NewEmitter(ec EmitterConfig) (emitter Emitter, err error) {
 // Emit emits a message to a specific topic using nsq producer, returning
 // an error if encoding payload fails or if an error occurred while publishing
 // the message.
-func (ee eventEmitter) Emit(topic string, payload interface{}) (err error) {
+func (ee *EventEmitter) Emit(topic string, payload interface{}) (err error) {
 	if len(topic) == 0 {
 		err = ErrTopicRequired
 		return
@@ -60,7 +66,9 @@ func (ee eventEmitter) Emit(topic string, payload interface{}) (err error) {
 		return
 	}
 
-	err = ee.Publish(topic, body)
+	_, err = ee.breaker.Execute(func() (interface{}, error) {
+		return nil, ee.producer.Publish(topic, body)
+	})
 
 	return
 }
@@ -68,7 +76,7 @@ func (ee eventEmitter) Emit(topic string, payload interface{}) (err error) {
 // Emit emits a message to a specific topic using nsq producer, but does not wait for
 // the response from `nsqd`. Returns an error if encoding payload fails and
 // logs to console if an error occurred while publishing the message.
-func (ee eventEmitter) EmitAsync(topic string, payload interface{}) (err error) {
+func (ee *EventEmitter) EmitAsync(topic string, payload interface{}) (err error) {
 	if len(topic) == 0 {
 		err = ErrTopicRequired
 		return
@@ -81,9 +89,9 @@ func (ee eventEmitter) EmitAsync(topic string, payload interface{}) (err error) 
 
 	responseChan := make(chan *nsq.ProducerTransaction, 1)
 
-	if err = ee.PublishAsync(topic, body, responseChan, ""); err != nil {
-		return
-	}
+	_, err = ee.breaker.Execute(func() (interface{}, error) {
+		return nil, ee.producer.PublishAsync(topic, body, responseChan, "")
+	})
 
 	go func(responseChan chan *nsq.ProducerTransaction) {
 		for {
@@ -102,7 +110,7 @@ func (ee eventEmitter) EmitAsync(topic string, payload interface{}) (err error) 
 // Request a RPC like method which implements request/reply pattern using nsq producer and consumer.
 // Returns an non-nil err if an error occurred while creating or listening to the internal
 // reply topic or encoding the message payload fails or while publishing the message.
-func (ee eventEmitter) Request(topic string, payload interface{}, handler handlerFunc) (err error) {
+func (ee *EventEmitter) Request(topic string, payload interface{}, handler handlerFunc) (err error) {
 	if len(topic) == 0 {
 		err = ErrTopicRequired
 		return
@@ -135,12 +143,14 @@ func (ee eventEmitter) Request(topic string, payload interface{}, handler handle
 		return
 	}
 
-	err = ee.Publish(topic, body)
+	_, err = ee.breaker.Execute(func() (interface{}, error) {
+		return nil, ee.producer.Publish(topic, body)
+	})
 
 	return
 }
 
-func (ee eventEmitter) encodeMessage(payload interface{}, replyTo string) (body []byte, err error) {
+func (ee *EventEmitter) encodeMessage(payload interface{}, replyTo string) (body []byte, err error) {
 	p, err := json.Marshal(payload)
 	if err != nil {
 		return
@@ -152,7 +162,7 @@ func (ee eventEmitter) encodeMessage(payload interface{}, replyTo string) (body 
 	return
 }
 
-func (ee eventEmitter) genReplyQueue() (replyTo string, err error) {
+func (ee *EventEmitter) genReplyQueue() (replyTo string, err error) {
 	b := make([]byte, 8)
 	_, err = rand.Read(b)
 	if err != nil {
@@ -165,15 +175,29 @@ func (ee eventEmitter) genReplyQueue() (replyTo string, err error) {
 	return
 }
 
-func (ee eventEmitter) createTopic(topic string) (err error) {
+func (ee *EventEmitter) createTopic(topic string) (err error) {
 	s := strings.Split(ee.address, ":")
 	port, err := strconv.Atoi(s[1])
 	if err != nil {
 		return
 	}
 
-	uri := "http://" + s[0] + ":" + strconv.Itoa(port+1) + "/topic/create?topic=" + topic
+	uri := fmt.Sprintf("http://%s:%s/topic/create?topic=%s", s[0], strconv.Itoa(port+1), topic)
 	_, err = http.Post(uri, "application/json; charset=utf-8", nil)
 
 	return
+}
+
+func newBreakerSettings(c Breaker) gobreaker.Settings {
+	return gobreaker.Settings{
+		Name:     "nsq-emitter-circuit-breaker",
+		Interval: c.Interval,
+		Timeout:  c.Timeout,
+		ReadyToTrip: func(counts gobreaker.Counts) bool {
+			return counts.ConsecutiveFailures > c.Threshold
+		},
+		OnStateChange: func(name string, from gobreaker.State, to gobreaker.State) {
+			c.OnStateChange(name, from.String(), to.String())
+		},
+	}
 }
