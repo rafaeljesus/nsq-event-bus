@@ -143,7 +143,9 @@ func (ee *EventEmitter) Request(topic string, payload interface{}, handler handl
 		return
 	}
 
-	err = ee.producer.Publish(topic, body)
+	_, err = ee.breaker.Execute(func() (interface{}, error) {
+		return nil, ee.producer.Publish(topic, body)
+	})
 
 	return
 }
@@ -180,7 +182,7 @@ func (ee *EventEmitter) createTopic(topic string) (err error) {
 		return
 	}
 
-	uri := fmt.Sprint("http://%s:/topic/create?topic=", s[0], strconv.Itoa(port+1), topic)
+	uri := fmt.Sprintf("http://%s:%s/topic/create?topic=%s", s[0], strconv.Itoa(port+1), topic)
 	_, err = http.Post(uri, "application/json; charset=utf-8", nil)
 
 	return
