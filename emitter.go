@@ -164,7 +164,7 @@ func (e *Emitter) createTopic(topic string) error {
 		return err
 	}
 
-	uri := fmt.Sprintf("http://%s/:%s/topic/create?topic=%s", s[0], strconv.Itoa(port+1), topic)
+	uri := fmt.Sprintf("http://%s:%s/topic/create?topic=%s", s[0], strconv.Itoa(port+1), topic)
 	_, err = http.Post(uri, "application/json; charset=utf-8", nil)
 	return err
 }
