@@ -13,6 +13,7 @@
   revision = "eee57a3ac4174c55924125bb15eeeda8cffb6e6f"
   version = "v1.0.7"
 
+<<<<<<< HEAD
 [[projects]]
   name = "github.com/sony/gobreaker"
   packages = ["."]
@@ -23,5 +24,11 @@
   analyzer-name = "dep"
   analyzer-version = 1
   inputs-digest = "f809d552b399c68ffa71039413bfe74a8a2316db0cbb328e9eb4f0f64cfd7cc0"
+=======
+[solve-meta]
+  analyzer-name = "dep"
+  analyzer-version = 1
+  inputs-digest = "45e1a05e449e98fc8f0a5c3f43c8202780fb331c45e02cca3494bd3d473dd84d"
+>>>>>>> 6a29b52... update ci
   solver-name = "gps-cdcl"
   solver-version = 1
