@@ -16,25 +16,23 @@ var (
 	ErrChannelRequired = errors.New("channel is mandatory")
 )
 
-type handlerFunc func(m *Message) (interface{}, error)
+// HandlerFunc is the handler function to handle the massage.
+type HandlerFunc func(m *Message) (interface{}, error)
 
 // On listen to a message from a specific topic using nsq consumer, returns
 // an error if topic and channel not passed or if an error occurred while creating
 // nsq consumer.
-func On(lc ListenerConfig) (err error) {
+func On(lc ListenerConfig) error {
 	if len(lc.Topic) == 0 {
-		err = ErrTopicRequired
-		return
+		return ErrTopicRequired
 	}
 
 	if len(lc.Channel) == 0 {
-		err = ErrChannelRequired
-		return
+		return ErrChannelRequired
 	}
 
 	if lc.HandlerFunc == nil {
-		err = ErrHandlerRequired
-		return
+		return ErrHandlerRequired
 	}
 
 	if len(lc.Lookup) == 0 {
@@ -48,39 +46,35 @@ func On(lc ListenerConfig) (err error) {
 	config := newListenerConfig(lc)
 	consumer, err := nsq.NewConsumer(lc.Topic, lc.Channel, config)
 	if err != nil {
-		return
+		return err
 	}
 
 	handler := handleMessage(lc)
 	consumer.AddConcurrentHandlers(handler, lc.HandlerConcurrency)
-	err = consumer.ConnectToNSQLookupds(lc.Lookup)
-
-	return
+	return consumer.ConnectToNSQLookupds(lc.Lookup)
 }
 
 func handleMessage(lc ListenerConfig) nsq.HandlerFunc {
-	return nsq.HandlerFunc(func(message *nsq.Message) (err error) {
+	return nsq.HandlerFunc(func(message *nsq.Message) error {
 		m := Message{Message: message}
-		if err = json.Unmarshal(message.Body, &m); err != nil {
-			return
+		if err := json.Unmarshal(message.Body, &m); err != nil {
+			return err
 		}
 
 		res, err := lc.HandlerFunc(&m)
 		if err != nil {
-			return
+			return err
 		}
 
 		if m.ReplyTo == "" {
-			return
+			return nil
 		}
 
 		emitter, err := NewEmitter(EmitterConfig{})
 		if err != nil {
-			return
+			return err
 		}
 
-		err = emitter.Emit(m.ReplyTo, res)
-
-		return
+		return emitter.Emit(m.ReplyTo, res)
 	})
 }
