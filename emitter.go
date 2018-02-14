@@ -17,8 +17,9 @@ import (
 type (
 	// Emitter is the emitter wrapper over nsq.
 	Emitter struct {
-		*nsq.Producer
-		address string
+		producer *nsq.Producer
+		address  string
+		breaker  *gobreaker.CircuitBreaker
 	}
 )
 
@@ -38,7 +39,7 @@ func NewEmitter(ec EmitterConfig) (*Emitter, error) {
 		return nil, err
 	}
 
-	return &EventEmitter{
+	return &Emitter{
 		producer: producer,
 		address:  address,
 		breaker:  gobreaker.NewCircuitBreaker(newBreakerSettings(ec.Breaker)),
