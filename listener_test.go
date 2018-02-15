@@ -2,6 +2,7 @@ package bus
 
 import (
 	"crypto/tls"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -15,20 +16,12 @@ func TestListener(t *testing.T) {
 		function func(*testing.T)
 	}{
 		{
-			scenario: "listener on",
-			function: testOn,
+			"listener on",
+			testOn,
 		},
 		{
-			scenario: "on requires topic",
-			function: testOnRequiresTopic,
-		},
-		{
-			scenario: "on requires channel",
-			function: testOnRequiresChannel,
-		},
-		{
-			scenario: "on requires handler",
-			function: testOnRequiresHandler,
+			"listener on validation",
+			testOnValidation,
 		},
 	}
 
@@ -44,29 +37,26 @@ func testOn(t *testing.T) {
 
 	emitter, err := NewEmitter(EmitterConfig{})
 	if err != nil {
-		t.Errorf("Expected to initialize emitter %s", err)
+		t.Fatalf("expected to initialize emitter %v", err)
 	}
 
 	e := event{"event"}
 	if err := emitter.Emit("ltopic", &e); err != nil {
-		t.Errorf("Expected to emit message %s", err)
+		t.Fatalf("expected to emit message %v", err)
 	}
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-
 	handler := func(message *Message) (reply interface{}, err error) {
+		defer wg.Done()
 		e := event{}
 		if err = message.DecodePayload(&e); err != nil {
 			t.Errorf("Expected to unmarshal payload")
 		}
-
 		if e.Name != "event" {
 			t.Errorf("Expected name to be equal event %s", e.Name)
 		}
-
 		message.Finish()
-		wg.Done()
 		return
 	}
 
@@ -107,41 +97,49 @@ func testOn(t *testing.T) {
 		MsgTimeout:          time.Second * 5,
 		AuthSecret:          "foo",
 	}); err != nil {
-		t.Errorf("Expected to listen a message %s", err)
+		t.Errorf("expected to listen a message %v", err)
 	}
 
 	wg.Wait()
 }
 
-func testOnRequiresTopic(t *testing.T) {
-	if err := On(ListenerConfig{
-		Topic:   "",
-		Channel: "test_on",
-		HandlerFunc: func(message *Message) (reply interface{}, err error) {
-			return
+func testOnValidation(t *testing.T) {
+	cases := []struct {
+		msg    string
+		config ListenerConfig
+	}{
+		{
+			"unexpected topic",
+			ListenerConfig{
+				Topic:   "",
+				Channel: "test_on",
+				HandlerFunc: func(message *Message) (reply interface{}, err error) {
+					return
+				},
+			},
 		},
-	}); err == nil {
-		t.Errorf("Expected to pass a topic %s", err)
-	}
-}
-
-func testOnRequiresChannel(t *testing.T) {
-	if err := On(ListenerConfig{
-		Topic:   "ltopic",
-		Channel: "",
-		HandlerFunc: func(message *Message) (reply interface{}, err error) {
-			return
+		{
+			"unexpected channel",
+			ListenerConfig{
+				Topic:   "ltopic",
+				Channel: "",
+				HandlerFunc: func(message *Message) (reply interface{}, err error) {
+					return
+				},
+			},
 		},
-	}); err == nil {
-		t.Errorf("Expected to pass a channel %s", err)
+		{
+			"unexpected handler",
+			ListenerConfig{
+				Topic:   "ltopic",
+				Channel: "test_on",
+			},
+		},
 	}
-}
 
-func testOnRequiresHandler(t *testing.T) {
-	if err := On(ListenerConfig{
-		Topic:   "ltopic",
-		Channel: "test_on",
-	}); err == nil {
-		t.Errorf("Expected to pass a handler %s", err)
+	for _, c := range cases {
+		if err := On(c.config); err == nil {
+			t.Fatalf(fmt.Sprintf("%s: %v", c.msg, err))
+		}
 	}
 }

@@ -15,20 +15,20 @@ func TestEmitter(t *testing.T) {
 		function func(*testing.T)
 	}{
 		{
-			scenario: "create new emitter",
-			function: testNewEmitter,
+			"create new emitter",
+			testNewEmitter,
 		},
 		{
-			scenario: "emit message",
-			function: testEmitMessage,
+			"emit message",
+			testEmitMessage,
 		},
 		{
-			scenario: "emit async message",
-			function: testEmitAsyncMessage,
+			"emit async message",
+			testEmitAsyncMessage,
 		},
 		{
-			scenario: "request message",
-			function: testRequestMessage,
+			"request message",
+			testRequestMessage,
 		},
 	}
 
@@ -76,68 +76,64 @@ func testNewEmitter(t *testing.T) {
 	})
 
 	if err != nil {
-		t.Errorf("Expected to initialize emitter %s", err)
+		t.Fatalf("expected to initialize emitter %v", err)
 	}
 }
 
 func testEmitMessage(t *testing.T) {
 	emitter, err := NewEmitter(EmitterConfig{})
 	if err != nil {
-		t.Errorf("Expected to initialize emitter %s", err)
+		t.Fatalf("expected to initialize emitter %v", err)
 	}
 
 	type event struct{ Name string }
 	e := event{"event"}
 	if err := emitter.Emit("etopic", &e); err != nil {
-		t.Errorf("Expected to emit message %s", err)
+		t.Fatalf("expected to emit message %v", err)
 	}
 
-	if err := emitter.Emit("", &e); err == nil {
-		t.Fail()
+	if err := emitter.Emit("", &e); err != ErrTopicRequired {
+		t.Fatalf("unexpected error value %v", err)
 	}
 }
 
 func testEmitAsyncMessage(t *testing.T) {
 	emitter, err := NewEmitter(EmitterConfig{})
 	if err != nil {
-		t.Errorf("Expected to initialize emitter %s", err)
+		t.Fatalf("expected to initialize emitter %v", err)
 	}
 
 	type event struct{ Name string }
 	e := event{"event"}
-
 	if err := emitter.EmitAsync("etopic", &e); err != nil {
-		t.Errorf("Expected to emit message %s", err)
+		t.Fatalf("expected to emit message %v", err)
 	}
 
-	if err := emitter.EmitAsync("", &e); err == nil {
-		t.Fail()
+	if err := emitter.Emit("", &e); err != ErrTopicRequired {
+		t.Fatalf("unexpected error value %v", err)
 	}
 }
 
 func testRequestMessage(t *testing.T) {
 	emitter, err := NewEmitter(EmitterConfig{})
 	if err != nil {
-		t.Errorf("Expected to initialize emitter %s", err)
+		t.Fatalf("expected to initialize emitter %v", err)
 	}
 
 	type event struct{ Name string }
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-
 	replyHandler := func(message *Message) (reply interface{}, err error) {
+		defer wg.Done()
 		e := event{}
 		if err = message.DecodePayload(&e); err != nil {
 			t.Errorf("Expected to unmarshal payload")
 		}
-
 		if e.Name != "event_reply" {
 			t.Errorf("Expected name to be equal event %s", e.Name)
 		}
-
 		message.Finish()
-		wg.Done()
 		return
 	}
 
@@ -156,20 +152,36 @@ func testRequestMessage(t *testing.T) {
 		Channel:     "test_request",
 		HandlerFunc: handler,
 	}); err != nil {
-		t.Errorf("Expected to listen a message %s", err)
+		t.Fatalf("expected to listen a message %v", err)
 	}
 
-	e := event{"event"}
-	if err := emitter.Request("etopic", &e, replyHandler); err != nil {
-		t.Errorf("Expected to request a message %s", err)
+	cases := []struct {
+		topic   string
+		event   event
+		replyh  func(message *Message) (interface{}, error)
+		wantErr bool
+	}{
+		{
+			"etopic", event{"event"}, replyHandler, true,
+		},
+		{
+			"", event{"event"}, replyHandler, false,
+		},
+		{
+			"etopic", event{"event"}, nil, false,
+		},
 	}
 
-	if err := emitter.Request("", &e, replyHandler); err == nil {
-		t.Fail()
-	}
-
-	if err := emitter.Request("etopic", &e, nil); err == nil {
-		t.Fail()
+	for _, c := range cases {
+		if c.wantErr {
+			if err := emitter.Request(c.topic, c.event, c.replyh); err != nil {
+				t.Errorf("expected to request a message %v", err)
+			}
+		} else {
+			if err := emitter.Request(c.topic, c.event, c.replyh); err == nil {
+				t.Errorf("unexpected error value %v", err)
+			}
+		}
 	}
 
 	wg.Wait()
@@ -177,16 +189,9 @@ func testRequestMessage(t *testing.T) {
 
 type localAddrMock struct{}
 
-func (a *localAddrMock) Network() (s string) {
-	return
-}
-
-func (a *localAddrMock) String() (s string) {
-	return
-}
+func (a *localAddrMock) Network() (s string) { return }
+func (a *localAddrMock) String() (s string)  { return }
 
 type backoffStrategyMock struct{}
 
-func (b *backoffStrategyMock) Calculate(attempt int) (v time.Duration) {
-	return
-}
+func (b *backoffStrategyMock) Calculate(attempt int) (v time.Duration) { return }
